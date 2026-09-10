@@ -39,3 +39,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# servidor dev
+web-server.log
+dist/
+
