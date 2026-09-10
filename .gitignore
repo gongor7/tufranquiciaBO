@@ -44,3 +44,6 @@ yarn-error.*
 web-server.log
 dist/
 
+
+# binarios de distribucion (van en GitHub Releases)
+apk/
