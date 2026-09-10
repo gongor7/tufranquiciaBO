@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, radii } from '../../theme';
-import { formatInvestmentRange } from '../../utils/formatters';
-import { Chip } from '../ui/Chip';
+import { getFranchiseImage } from '../../constants/images';
+import { formatInvestmentRange, formatUSD } from '../../utils/formatters';
 import type { Franchise } from '../../types';
 
 interface FranchiseCardProps {
@@ -11,104 +12,209 @@ interface FranchiseCardProps {
 }
 
 export function FranchiseCard({ franchise, onPress }: FranchiseCardProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = !imageFailed;
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
-      <View style={styles.row}>
-        <View style={styles.logoBox}>
-          <Text style={styles.logo}>{franchise.logoEmoji}</Text>
+      <View style={styles.imageWrap}>
+        {showImage ? (
+          <Image
+            source={{ uri: getFranchiseImage(franchise.slug) }}
+            style={styles.image}
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <View style={styles.imageFallback}>
+            <Text style={styles.imageFallbackEmoji}>{franchise.logoEmoji}</Text>
+          </View>
+        )}
+        <View style={styles.imageOverlay} />
+        {franchise.featured && <Text style={styles.featuredBadge}>★ Destacada</Text>}
+        <View style={styles.cityBadge}>
+          <Text style={styles.cityBadgeText}>📍 {franchise.city}</Text>
         </View>
-        <View style={styles.info}>
-          <Text style={styles.name} numberOfLines={1}>
-            {franchise.name}
-          </Text>
+      </View>
+
+      <View style={styles.body}>
+        <Text style={styles.name} numberOfLines={1}>
+          {franchise.name}
+        </Text>
+        {franchise.tagline != null && (
           <Text style={styles.tagline} numberOfLines={1}>
             {franchise.tagline}
           </Text>
-          <View style={styles.meta}>
-            <Text style={styles.metaText}>
-              {franchise.industryEmoji} {franchise.industry}
-            </Text>
-            <Text style={styles.metaText}>📍 {franchise.city}</Text>
-          </View>
-          <Text style={styles.investment}>
-            {formatInvestmentRange(franchise.minInvestment, franchise.maxInvestment, franchise.currency)}
+        )}
+
+        <View style={styles.metaRow}>
+          <Text style={styles.metaText}>
+            {franchise.industryEmoji} {getIndustryLabelShort(franchise.industry)}
+          </Text>
+          {franchise.estimatedRoi != null && (
+            <Text style={styles.roiText}>ROI {franchise.estimatedRoi}</Text>
+          )}
+        </View>
+
+        <View style={styles.investmentRow}>
+          <Text style={styles.investment} numberOfLines={1}>
+            {formatInvestmentRange(
+              franchise.minInvestment,
+              franchise.maxInvestment,
+              franchise.currency,
+            )}
           </Text>
         </View>
-      </View>
-      <View style={styles.footer}>
-        <Chip label="Ver detalle" selected />
+
+        <View style={styles.footer}>
+          <Text style={styles.views}>👁 {franchise.viewsCount} vistas</Text>
+          <Text style={styles.from}>Desde {formatUSD(franchise.minInvestment)}</Text>
+        </View>
       </View>
     </Pressable>
   );
+}
+
+function getIndustryLabelShort(industry: string): string {
+  const labels: Record<string, string> = {
+    comida: 'Comida y Bebida',
+    retail: 'Retail y Moda',
+    servicios: 'Servicios',
+    educacion: 'Educación',
+    tecnologia: 'Tecnología',
+    salud: 'Salud y Bienestar',
+    fitness: 'Fitness',
+    belleza: 'Belleza',
+  };
+  return labels[industry] ?? industry;
 }
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     borderRadius: radii.lg,
-    padding: spacing.md,
     marginBottom: spacing.md,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   pressed: {
-    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+    opacity: 0.95,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  imageWrap: {
+    height: 120,
+    position: 'relative',
   },
-  logoBox: {
-    width: 64,
-    height: 64,
-    borderRadius: radii.md,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imageFallback: {
+    flex: 1,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logo: {
-    fontSize: 30,
+  imageFallbackEmoji: {
+    fontSize: 44,
   },
-  info: {
-    flex: 1,
-    marginLeft: spacing.md,
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(11,37,69,0.18)',
+  },
+  featuredBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: colors.accent,
+    color: colors.primaryDark,
+    fontSize: 11,
+    fontWeight: '800',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+    overflow: 'hidden',
+    letterSpacing: 0.5,
+  },
+  cityBadge: {
+    position: 'absolute',
+    bottom: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: 'rgba(11,37,69,0.75)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+  },
+  cityBadgeText: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  body: {
+    padding: spacing.md,
   },
   name: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
     color: colors.text,
   },
   tagline: {
-    fontSize: 13,
+    fontSize: 12.5,
     color: colors.textSecondary,
     marginTop: 2,
   },
-  meta: {
+  metaRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: spacing.sm,
   },
   metaText: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: colors.textSecondary,
+    flexShrink: 1,
+  },
+  roiText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: colors.success,
+  },
+  investmentRow: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: radii.sm,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+    alignSelf: 'flex-start',
   },
   investment: {
-    fontSize: 14,
+    fontSize: 12.5,
     fontWeight: '700',
     color: colors.primary,
-    marginTop: spacing.sm,
   },
   footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: spacing.sm,
-    alignItems: 'flex-end',
+  },
+  views: {
+    fontSize: 11,
+    color: colors.textLight,
+  },
+  from: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primaryLight,
   },
 });

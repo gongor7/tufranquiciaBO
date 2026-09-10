@@ -20,6 +20,12 @@
     },
     "plugins": [
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "994e2960-2b6b-403f-8a44-24cbf6451c42"
+      }
+    },
+    "owner": "gongor7"
   }
 }

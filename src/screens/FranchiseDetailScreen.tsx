@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
+  Image,
+  Linking,
   Modal,
   Pressable,
   ScrollView,
@@ -12,6 +14,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { colors, spacing, radii, typography } from '../theme';
 import { getIndustryLabel } from '../constants';
+import { getFranchiseImage } from '../constants/images';
 import { FranchiseRepository } from '../database/repositories/franchise.repository';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { useMessageStore } from '../stores/useMessageStore';
@@ -64,6 +67,16 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
     void toggleFavorite(franchise.id);
   };
 
+  const onWhatsapp = () => {
+    if (franchise.whatsapp == null) return;
+    const digits = franchise.whatsapp.replace(/\D/g, '');
+    void Linking.openURL(
+      `https://wa.me/${digits}?text=${encodeURIComponent(
+        `Hola, me interesa la franquicia de ${franchise.name} que vi en TuFranquiciaBO.`,
+      )}`,
+    );
+  };
+
   const onSent = (message: string) => {
     setContactOpen(false);
     setSent(true);
@@ -73,69 +86,105 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: spacing.xxl }}>
-        <View style={styles.header}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logo}>{franchise.logoEmoji}</Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: spacing.xxl }} showsVerticalScrollIndicator={false}>
+        <View style={styles.hero}>
+          <Image source={{ uri: getFranchiseImage(franchise.slug) }} style={StyleSheet.absoluteFill} />
+          <View style={styles.heroOverlay} />
+          <View style={styles.heroActions}>
+            <Pressable style={styles.circleButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.circleButtonText}>←</Text>
+            </Pressable>
+            <Pressable style={styles.circleButton} onPress={onFavorite}>
+              <Text style={styles.circleButtonText}>{isFavorite ? '❤️' : '🤍'}</Text>
+            </Pressable>
           </View>
-          {franchise.featured && <Text style={styles.featuredTag}>Destacada</Text>}
-        </View>
-
-        <Text style={styles.name}>{franchise.name}</Text>
-        {franchise.tagline != null && <Text style={styles.tagline}>{franchise.tagline}</Text>}
-
-        <Pressable style={styles.favoriteRow} onPress={onFavorite}>
-          <Text style={[styles.heart, isFavorite && styles.heartActive]}>
-            {isFavorite ? '❤️' : '🤍'}
-          </Text>
-          <Text style={styles.favoriteLabel}>
-            {isFavorite ? 'En favoritos' : 'Agregar a favoritos'}
-          </Text>
-        </Pressable>
-
-        <Text style={styles.investment}>
-          {formatInvestmentRange(franchise.minInvestment, franchise.maxInvestment, franchise.currency)}
-        </Text>
-
-        <View style={styles.stats}>
-          <Stat label="ROI estimado" value={franchise.estimatedRoi ?? '—'} />
-          <Stat
-            label="Royalty"
-            value={formatRoyalty(franchise.royaltyPercentage, franchise.royaltyType)}
-          />
-          <Stat label="Empleados" value={`${franchise.employeesRequired}`} />
-          <Stat label="Entrenamiento" value={`${franchise.trainingWeeks} semanas`} />
-        </View>
-
-        <DetailRow label="Categoría" value={getIndustryLabel(franchise.industry)} />
-        <DetailRow label="Ubicación" value={`${franchise.department}, ${franchise.city}`} />
-        <DetailRow label="Soporte" value={capitalize(franchise.supportLevel)} />
-
-        <Text style={styles.sectionTitle}>Descripción</Text>
-        <Text style={styles.description}>{franchise.description}</Text>
-
-        <Text style={styles.sectionTitle}>Contacto</Text>
-        <View style={styles.contactCard}>
-          <DetailRow label="Contacto" value={franchise.contactName} />
-          <DetailRow label="Email" value={franchise.contactEmail} />
-          {franchise.contactPhone != null && (
-            <DetailRow label="Teléfono" value={franchise.contactPhone} />
+          {franchise.featured && (
+            <View style={styles.heroFooter}>
+              <Text style={styles.featuredTag}>★ Franquicia destacada</Text>
+              <Text style={styles.heroViews}>👁 {franchise.viewsCount} consultas</Text>
+            </View>
           )}
-          {franchise.website != null && <DetailRow label="Web" value={franchise.website} />}
+        </View>
+
+        <View style={styles.content}>
+          <View style={styles.titleRow}>
+            <View style={styles.logoBox}>
+              <Text style={styles.logo}>{franchise.logoEmoji}</Text>
+            </View>
+            <View style={styles.titleInfo}>
+              <Text style={styles.name}>{franchise.name}</Text>
+              {franchise.tagline != null && (
+                <Text style={styles.tagline}>{franchise.tagline}</Text>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.chipRow}>
+            <View style={styles.chip}>
+              <Text style={styles.chipText}>{franchise.industryEmoji} {getIndustryLabel(franchise.industry)}</Text>
+            </View>
+            <View style={styles.chip}>
+              <Text style={styles.chipText}>📍 {franchise.city}, {franchise.department}</Text>
+            </View>
+            <View style={[styles.chip, styles.chipSupport]}>
+              <Text style={[styles.chipText, styles.chipSupportText]}>
+                🛠 Soporte {capitalize(franchise.supportLevel)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.investmentBanner}>
+            <Text style={styles.investmentLabel}>INVERSIÓN INICIAL ESTIMADA</Text>
+            <Text style={styles.investment}>
+              {formatInvestmentRange(franchise.minInvestment, franchise.maxInvestment, franchise.currency)}
+            </Text>
+          </View>
+
+          <View style={styles.stats}>
+            <Stat icon="📈" label="ROI estimado" value={franchise.estimatedRoi ?? '—'} />
+            <Stat
+              icon="💳"
+              label="Royalty"
+              value={formatRoyalty(franchise.royaltyPercentage, franchise.royaltyType)}
+            />
+            <Stat icon="👥" label="Empleados" value={`${franchise.employeesRequired}`} />
+            <Stat icon="🎓" label="Capacitación" value={`${franchise.trainingWeeks} semanas`} />
+          </View>
+
+          <Text style={styles.sectionTitle}>Sobre la franquicia</Text>
+          <Text style={styles.description}>{franchise.description}</Text>
+
+          <Text style={styles.sectionTitle}>Contacto del franquiciador</Text>
+          <View style={styles.contactCard}>
+            <DetailRow icon="👤" label="Responsable" value={franchise.contactName} />
+            <DetailRow icon="✉️" label="Email" value={franchise.contactEmail} />
+            {franchise.contactPhone != null && (
+              <DetailRow icon="📞" label="Teléfono" value={franchise.contactPhone} />
+            )}
+            {franchise.website != null && (
+              <DetailRow icon="🌐" label="Sitio web" value={franchise.website} />
+            )}
+          </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <Button
-          title={`💬 Conversación`}
+          title="💬 Conversar"
           variant="outline"
           onPress={() => navigation.navigate('Chat', { franchiseId: franchise.id })}
         />
         <Button
-          title="Contactar"
+          title="Solicitar información"
           onPress={() => setContactOpen(true)}
         />
       </View>
+
+      {franchise.whatsapp != null && (
+        <Pressable style={styles.whatsappFab} onPress={onWhatsapp}>
+          <Text style={styles.whatsappFabText}>WhatsApp</Text>
+        </Pressable>
+      )}
 
       <ContactModal
         visible={contactOpen}
@@ -155,18 +204,20 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <View style={styles.stat}>
+      <Text style={styles.statIcon}>{icon}</Text>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <View style={styles.detailRow}>
+      <Text style={styles.detailIcon}>{icon}</Text>
       <Text style={styles.detailLabel}>{label}</Text>
       <Text style={styles.detailValue}>{value}</Text>
     </View>
@@ -328,29 +379,53 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     padding: spacing.lg,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+  hero: {
+    height: 230,
+    position: 'relative',
+    justifyContent: 'flex-end',
   },
-  logoBox: {
-    width: 80,
-    height: 80,
-    borderRadius: radii.lg,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
+  heroOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(11,37,69,0.45)',
+  },
+  heroActions: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  circleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  logo: {
-    fontSize: 40,
+  circleButtonText: {
+    fontSize: 18,
+  },
+  heroFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   featuredTag: {
-    marginLeft: spacing.md,
     backgroundColor: colors.accent,
-    color: colors.white,
+    color: colors.primaryDark,
     fontWeight: '800',
     fontSize: 12,
     paddingHorizontal: spacing.sm,
@@ -358,51 +433,103 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     overflow: 'hidden',
   },
-  name: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: colors.text,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
+  heroViews: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
   },
-  tagline: {
-    fontSize: 15,
-    color: colors.textSecondary,
+  content: {
     paddingHorizontal: spacing.lg,
-    marginTop: 2,
+    paddingTop: spacing.md,
   },
-  favoriteRow: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
   },
-  heart: {
-    fontSize: 24,
+  logoBox: {
+    width: 72,
+    height: 72,
+    borderRadius: radii.lg,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  heartActive: {},
-  favoriteLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.primary,
-    marginLeft: spacing.sm,
+  logo: {
+    fontSize: 36,
   },
-  investment: {
+  titleInfo: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  name: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.primary,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.sm,
+    color: colors.text,
+  },
+  tagline: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  chip: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 5,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  chipSupport: {
+    backgroundColor: 'rgba(212,168,67,0.15)',
+    borderColor: colors.accent,
+  },
+  chipSupportText: {
+    color: '#8A6D1F',
+  },
+  investmentBanner: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+  },
+  investmentLabel: {
+    color: colors.accentLight,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  investment: {
+    color: colors.white,
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 4,
   },
   stats: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
     gap: spacing.sm,
   },
   stat: {
-    flexBasis: '45%',
+    flexBasis: '47%',
     flexGrow: 1,
     backgroundColor: colors.white,
     borderRadius: radii.md,
@@ -410,21 +537,52 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.md,
   },
+  statIcon: {
+    fontSize: 18,
+  },
   statValue: {
     fontSize: 17,
     fontWeight: '800',
     color: colors.text,
+    marginTop: 4,
   },
   statLabel: {
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
   },
+  sectionTitle: {
+    ...typography.h3,
+    color: colors.text,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 23,
+    color: colors.text,
+    backgroundColor: colors.white,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  contactCard: {
+    backgroundColor: colors.white,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.sm,
+  },
   detailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  detailIcon: {
+    fontSize: 15,
+    marginRight: spacing.sm,
   },
   detailLabel: {
     fontSize: 14,
@@ -432,26 +590,11 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 14,
+    fontWeight: '600',
     color: colors.text,
     flexShrink: 1,
     textAlign: 'right',
     marginLeft: spacing.md,
-  },
-  sectionTitle: {
-    ...typography.h3,
-    color: colors.text,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  description: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.text,
-    paddingHorizontal: spacing.lg,
-  },
-  contactCard: {
-    paddingVertical: spacing.sm,
   },
   footer: {
     flexDirection: 'row',
@@ -461,6 +604,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+  },
+  whatsappFab: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: 90,
+    backgroundColor: '#25D366',
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  whatsappFabText: {
+    color: colors.white,
+    fontWeight: '800',
+    fontSize: 14,
   },
   modalBackdrop: {
     flex: 1,

@@ -1,12 +1,11 @@
 import { useEffect } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radii, typography } from '../theme';
-import { industries, getIndustry } from '../constants';
+import { industries } from '../constants';
+import { getFranchiseImage } from '../constants/images';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { FranchiseCard } from '../components/features/FranchiseCard';
-import { Chip } from '../components/ui/Chip';
-import { SectionTitle } from '../components/ui/SectionTitle';
 import type { TabScreenProps } from '../navigation/types';
 import type { Franchise } from '../types';
 
@@ -16,18 +15,23 @@ export function HomeScreen() {
   const navigation = useNavigation<Navigation>();
   const featured = useFranchiseStore((s) => s.featured);
   const popular = useFranchiseStore((s) => s.popular);
+  const franchises = useFranchiseStore((s) => s.franchises);
   const loadFeatured = useFranchiseStore((s) => s.loadFeatured);
   const loadPopular = useFranchiseStore((s) => s.loadPopular);
+  const loadFranchises = useFranchiseStore((s) => s.loadFranchises);
   const setTextFilter = useFranchiseStore((s) => s.setFilters);
 
   useEffect(() => {
     void loadFeatured();
     void loadPopular();
-  }, [loadFeatured, loadPopular]);
+    void loadFranchises();
+  }, [loadFeatured, loadPopular, loadFranchises]);
 
   const hero = featured[0];
   const openDetail = (franchise: Franchise) =>
     navigation.navigate('FranchiseDetail', { franchiseId: franchise.id });
+
+  const openExplore = () => navigation.navigate('Explore');
 
   const openIndustry = (industry: string) => {
     useFranchiseStore.setState((s) => ({ filters: { ...s.filters, industry, text: undefined } }));
@@ -36,51 +40,87 @@ export function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <SectionTitle>Inicio</SectionTitle>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Bienvenido 👋</Text>
+            <Text style={styles.headerTitle}>Encuentra tu franquicia ideal en Bolivia</Text>
+          </View>
+          <View style={styles.headerBadge}>
+            <Text style={styles.headerBadgeCount}>{franchises.length}</Text>
+            <Text style={styles.headerBadgeLabel}>oportunidades</Text>
+          </View>
+        </View>
 
-        <TextInput
-          style={styles.search}
-          placeholder="Buscar franquicias..."
-          placeholderTextColor={colors.textSecondary}
-          onChangeText={(text) => setTextFilter({ text })}
-        />
+        <Pressable onPress={openExplore} style={styles.searchWrap}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={styles.search}
+            placeholder="Buscar por nombre, ciudad o rubro..."
+            placeholderTextColor={colors.textSecondary}
+            onChangeText={(text) => setTextFilter({ text })}
+          />
+        </Pressable>
 
         {hero != null && (
           <Pressable style={styles.banner} onPress={() => openDetail(hero)}>
-            <Text style={styles.bannerEmoji}>{hero.logoEmoji}</Text>
-            <View style={styles.bannerText}>
-              <Text style={styles.bannerTag}>Destacada</Text>
-              <Text style={styles.bannerName}>{hero.name}</Text>
+            <Image
+              source={{ uri: getFranchiseImage(hero.slug) }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.bannerOverlay} />
+            <View style={styles.bannerContent}>
+              <View style={styles.bannerTags}>
+                <Text style={styles.bannerTag}>★ OPORTUNIDAD DESTACADA</Text>
+              </View>
+              <Text style={styles.bannerName} numberOfLines={1}>
+                {hero.logoEmoji} {hero.name}
+              </Text>
               <Text style={styles.bannerSub} numberOfLines={2}>
                 {hero.tagline}
               </Text>
+              <Text style={styles.bannerCity}>📍 {hero.city}, {hero.department}</Text>
             </View>
           </Pressable>
         )}
 
-        <Text style={styles.subtitle}>Categorías</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.subtitle}>Explora por categoría</Text>
+          <Pressable onPress={openExplore}>
+            <Text style={styles.seeAll}>Ver todas</Text>
+          </Pressable>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={{ marginHorizontal: -spacing.md }}
+          contentContainerStyle={styles.categories}
         >
-          <View style={styles.categories}>
-            {industries.map((industry) => (
-              <Chip
-                key={industry.id}
-                label={industry.label}
-                emoji={getIndustry(industry.id)?.emoji}
-                onPress={() => openIndustry(industry.id)}
-              />
-            ))}
-          </View>
+          {industries.map((industry) => (
+            <Pressable
+              key={industry.id}
+              style={({ pressed }) => [styles.categoryTile, pressed && styles.pressedTile]}
+              onPress={() => openIndustry(industry.id)}
+            >
+              <View style={styles.categoryEmoji}>
+                <Text style={styles.categoryEmojiText}>{industry.emoji}</Text>
+              </View>
+              <Text style={styles.categoryLabel} numberOfLines={2}>
+                {industry.label}
+              </Text>
+            </Pressable>
+          ))}
         </ScrollView>
 
-        <Text style={styles.subtitle}>Populares</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.subtitle}>Las más consultadas</Text>
+          <Pressable onPress={openExplore}>
+            <Text style={styles.seeAll}>Ver todas</Text>
+          </Pressable>
+        </View>
         <FlatList
           key="popular"
-          data={popular}
+          data={popular.slice(0, 8)}
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => `popular-${item.id}`}
@@ -105,62 +145,172 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
   },
-  search: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  greeting: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  headerTitle: {
+    ...typography.h2,
+    color: colors.primaryDark,
+    marginTop: 2,
+    flexShrink: 1,
+  },
+  headerBadge: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    marginLeft: spacing.sm,
+  },
+  headerBadgeCount: {
+    color: colors.accent,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  headerBadgeLabel: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.md,
+    borderRadius: radii.full,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+    marginBottom: spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  searchIcon: {
     fontSize: 16,
+    marginRight: spacing.sm,
+  },
+  search: {
+    flex: 1,
+    paddingVertical: spacing.sm + 4,
+    fontSize: 15,
     color: colors.text,
-    marginBottom: spacing.md,
   },
   banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
+    height: 190,
+    borderRadius: radii.xl,
+    overflow: 'hidden',
     marginBottom: spacing.sm,
+    justifyContent: 'flex-end',
   },
-  bannerEmoji: {
-    fontSize: 48,
-    marginRight: spacing.md,
+  bannerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(11,37,69,0.62)',
   },
-  bannerText: {
-    flex: 1,
+  bannerContent: {
+    padding: spacing.lg,
+  },
+  bannerTags: {
+    flexDirection: 'row',
   },
   bannerTag: {
     color: colors.accent,
+    backgroundColor: 'rgba(11,37,69,0.55)',
     fontWeight: '800',
-    fontSize: 12,
-    textTransform: 'uppercase',
+    fontSize: 11,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radii.full,
     letterSpacing: 1,
+    overflow: 'hidden',
   },
   bannerName: {
     color: colors.white,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    marginTop: 4,
+    marginTop: spacing.sm,
   },
   bannerSub: {
     color: '#DDE7F0',
     fontSize: 14,
     marginTop: 4,
   },
+  bannerCity: {
+    color: colors.accentLight,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: spacing.sm,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
   subtitle: {
     ...typography.h3,
     color: colors.text,
-    marginBottom: spacing.sm,
-    marginTop: spacing.lg,
+  },
+  seeAll: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primaryLight,
   },
   categories: {
     flexDirection: 'row',
     paddingHorizontal: spacing.md,
   },
+  categoryTile: {
+    width: 84,
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  categoryEmoji: {
+    width: 64,
+    height: 64,
+    borderRadius: radii.lg,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  categoryEmojiText: {
+    fontSize: 28,
+  },
+  categoryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+  pressedTile: {
+    opacity: 0.8,
+    transform: [{ scale: 0.96 }],
+  },
   cardWrapper: {
-    width: 260,
+    width: 240,
+    marginRight: spacing.md,
   },
   empty: {
     color: colors.textSecondary,
