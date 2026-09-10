@@ -1,0 +1,13 @@
+const expoConfig = require('eslint-config-expo/flat');
+
+module.exports = [
+  ...expoConfig,
+  {
+    ignores: ['node_modules/**', 'coverage/**', 'dist/**'],
+  },
+  {
+    rules: {
+      'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
+];
