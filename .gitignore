@@ -47,3 +47,5 @@ dist/
 
 # binarios de distribucion (van en GitHub Releases)
 apk/
+*.apk
+*.bat
