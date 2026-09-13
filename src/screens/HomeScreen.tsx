@@ -3,11 +3,12 @@ import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radii, typography } from '../theme';
 import { industries } from '../constants';
+import { SEGMENTS } from '../constants/segments';
 import { getFranchiseImage } from '../constants/images';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { FranchiseCard } from '../components/features/FranchiseCard';
 import type { TabScreenProps } from '../navigation/types';
-import type { Franchise } from '../types';
+import type { Franchise, Segment as SegmentId } from '../types';
 
 type Navigation = TabScreenProps<'Home'>['navigation'];
 
@@ -38,13 +39,20 @@ export function HomeScreen() {
     navigation.navigate('Explore');
   };
 
+  const openSegment = (segment: SegmentId) => {
+    useFranchiseStore.setState((s) => ({
+      filters: { ...s.filters, segments: [segment], industry: undefined, text: undefined },
+    }));
+    navigation.navigate('Explore');
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Bienvenido 👋</Text>
-            <Text style={styles.headerTitle}>Encuentra tu franquicia ideal en Bolivia</Text>
+            <Text style={styles.headerTitle}>Encuentra tu próxima inversión en Bolivia</Text>
           </View>
           <View style={styles.headerBadge}>
             <Text style={styles.headerBadgeCount}>{franchises.length}</Text>
@@ -83,6 +91,31 @@ export function HomeScreen() {
             </View>
           </Pressable>
         )}
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.subtitle}>Invierte por segmento</Text>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -spacing.md }}
+          contentContainerStyle={styles.categories}
+        >
+          {SEGMENTS.map((segment) => (
+            <Pressable
+              key={segment.id}
+              style={({ pressed }) => [styles.categoryTile, pressed && styles.pressedTile]}
+              onPress={() => openSegment(segment.id)}
+            >
+              <View style={styles.categoryEmoji}>
+                <Text style={styles.categoryEmojiText}>{segment.emoji}</Text>
+              </View>
+              <Text style={styles.categoryLabel} numberOfLines={2}>
+                {segment.label}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.subtitle}>Explora por categoría</Text>
@@ -130,7 +163,7 @@ export function HomeScreen() {
             </View>
           )}
           ListEmptyComponent={
-            <Text style={styles.empty}>En este momento no hay franquicias populares.</Text>
+            <Text style={styles.empty}>En este momento no hay oportunidades populares.</Text>
           }
         />
       </ScrollView>

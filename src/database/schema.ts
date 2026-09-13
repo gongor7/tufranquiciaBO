@@ -1,3 +1,5 @@
+export const SCHEMA_VERSION = 2;
+
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +26,7 @@ CREATE TABLE IF NOT EXISTS franchises (
   country TEXT DEFAULT 'Bolivia',
   department TEXT NOT NULL,
   city TEXT NOT NULL,
-  min_investment REAL NOT NULL CHECK(min_investment > 0),
+  min_investment REAL NOT NULL CHECK(min_investment >= 0),
   max_investment REAL NOT NULL CHECK(max_investment >= min_investment),
   currency TEXT DEFAULT 'USD',
   royalty_percentage REAL CHECK(royalty_percentage >= 0 AND royalty_percentage <= 100),
@@ -47,7 +49,29 @@ CREATE TABLE IF NOT EXISTS franchises (
   inquiries_count INTEGER DEFAULT 0,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
+  segment TEXT NOT NULL DEFAULT 'franquicia'
+    CHECK(segment IN ('franquicia', 'sociedad', 'proyecto', 'mipe')),
+  subtype TEXT,
+  sought_amount REAL,
+  available_percentage REAL
+    CHECK(available_percentage IS NULL OR (available_percentage >= 1 AND available_percentage <= 100)),
+  project_start DATE,
+  project_end DATE,
+  mipe_stage TEXT CHECK(mipe_stage IS NULL OR mipe_stage IN ('idea', 'validado', 'operativo')),
+  pitch TEXT,
+  video_url TEXT,
+  formalization_plan TEXT,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS milestones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  franchise_id INTEGER NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0,
+  title TEXT NOT NULL,
+  target_date DATE,
+  completed INTEGER DEFAULT 0,
+  FOREIGN KEY (franchise_id) REFERENCES franchises(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -81,6 +105,9 @@ CREATE INDEX IF NOT EXISTS idx_franchises_department ON franchises(department);
 CREATE INDEX IF NOT EXISTS idx_franchises_investment ON franchises(min_investment, max_investment);
 CREATE INDEX IF NOT EXISTS idx_franchises_status ON franchises(status);
 CREATE INDEX IF NOT EXISTS idx_franchises_featured ON franchises(featured);
+CREATE INDEX IF NOT EXISTS idx_franchises_segment ON franchises(segment);
+CREATE INDEX IF NOT EXISTS idx_franchises_mipe_stage ON franchises(mipe_stage);
+CREATE INDEX IF NOT EXISTS idx_milestones_franchise ON milestones(franchise_id);
 CREATE INDEX IF NOT EXISTS idx_messages_franchise ON messages(franchise_id);
 CREATE INDEX IF NOT EXISTS idx_messages_read ON messages(is_read);
 `;

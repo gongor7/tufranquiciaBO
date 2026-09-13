@@ -1,6 +1,6 @@
 import { getExecutor } from '..';
 import { buildWhereClause, buildOrderBy, BASE_SELECT, mapFranchiseRow, FranchiseRow } from '../franchiseQueries';
-import type { CreateFranchiseDTO, Filters, Franchise } from '../../types';
+import type { CreateFranchiseDTO, CreateOpportunityDTO, Filters, Franchise, Milestone } from '../../types';
 import { slugify } from '../../utils/formatters';
 
 export const FranchiseRepository = {
@@ -38,7 +38,7 @@ export const FranchiseRepository = {
     await getExecutor().run('UPDATE franchises SET views_count = views_count + 1 WHERE id = ?', [id]);
   },
 
-  async create(dto: CreateFranchiseDTO): Promise<Franchise> {
+  async create(dto: CreateFranchiseDTO & Partial<CreateOpportunityDTO>): Promise<Franchise> {
     const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
     const baseSlug = slugify(dto.name);
     let slug = baseSlug;
@@ -62,8 +62,10 @@ export const FranchiseRepository = {
         currency, royalty_percentage, royalty_type, estimated_roi, employees_required,
         training_weeks, support_level, website, contact_name, contact_email,
         contact_phone, whatsapp, featured, status, views_count, inquiries_count,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        created_at, updated_at, segment, subtype, sought_amount,
+        available_percentage, project_start, project_end, mipe_stage, pitch,
+        video_url, formalization_plan
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         null,
         dto.name,
@@ -79,12 +81,12 @@ export const FranchiseRepository = {
         dto.minInvestment,
         dto.maxInvestment,
         'USD',
-        dto.royaltyPercentage,
+        dto.royaltyPercentage ?? 0,
         'mensual',
         dto.estimatedRoi ?? null,
-        dto.employeesRequired,
-        dto.trainingWeeks,
-        dto.supportLevel,
+        dto.employeesRequired ?? 1,
+        dto.trainingWeeks ?? 1,
+        dto.supportLevel ?? 'basico',
         dto.website || null,
         dto.contactName,
         dto.contactEmail,
@@ -96,6 +98,16 @@ export const FranchiseRepository = {
         0,
         now,
         now,
+        dto.segment ?? 'franquicia',
+        dto.subtype ?? null,
+        dto.soughtAmount ?? null,
+        dto.availablePercentage ?? null,
+        dto.projectStart ?? null,
+        dto.projectEnd ?? null,
+        dto.mipeStage ?? null,
+        dto.pitch ?? null,
+        dto.videoUrl ?? null,
+        dto.formalizationPlan ?? null,
       ],
     );
 
@@ -109,5 +121,27 @@ export const FranchiseRepository = {
       [id],
     );
     return rows[0];
+  },
+
+  async getMilestones(franchiseId: number): Promise<Milestone[]> {
+    const rows = await getExecutor().getAll<{
+      id: number;
+      franchise_id: number;
+      position: number;
+      title: string;
+      target_date: string | null;
+      completed: number;
+    }>(
+      'SELECT id, franchise_id, position, title, target_date, completed FROM milestones WHERE franchise_id = ? ORDER BY position, id',
+      [franchiseId],
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      franchiseId: r.franchise_id,
+      position: r.position,
+      title: r.title,
+      targetDate: r.target_date,
+      completed: r.completed === 1,
+    }));
   },
 };

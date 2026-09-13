@@ -4,7 +4,9 @@ Principios innegociables. Toda spec, plan y tarea debe cumplirlos.
 
 1. **Frontend local y sin backend**: app React Native (Expo) para Android.
    Toda la persistencia es local en SQLite vía expo-sqlite. Nada de red,
-   ni APIs, ni autenticación real en el MVP.
+   ni APIs, ni autenticación real mientras dure el Producto 1
+   (multisegmento local); backend e identidad llegan con productos
+   posteriores (ver docs/roadmap.md).
 2. **La spec manda**: ningún comportamiento se implementa si no está en la
    spec activa. Si falta una decisión, se detiene el trabajo y se pregunta.
 3. **Lógica separada de interfaz**: la capa de datos (repositorios) y la

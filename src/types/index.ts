@@ -3,6 +3,17 @@ export type SupportLevel = 'basico' | 'avanzado' | 'premium';
 export type RoyaltyType = 'mensual' | 'anual';
 export type FranchiseStatus = 'activa' | 'pausada' | 'cerrada';
 export type SortBy = 'recent' | 'popular' | 'investment' | 'investmentDesc';
+export type Segment = 'franquicia' | 'sociedad' | 'proyecto' | 'mipe';
+export type MipeStage = 'idea' | 'validado' | 'operativo';
+
+export interface Milestone {
+  id: number;
+  franchiseId: number;
+  position: number;
+  title: string;
+  targetDate: string | null;
+  completed: boolean;
+}
 
 export interface User {
   id: number;
@@ -48,6 +59,16 @@ export interface Franchise {
   isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
+  segment: Segment;
+  subtype: string | null;
+  soughtAmount: number | null;
+  availablePercentage: number | null;
+  projectStart: string | null;
+  projectEnd: string | null;
+  mipeStage: MipeStage | null;
+  pitch: string | null;
+  videoUrl: string | null;
+  formalizationPlan: string | null;
 }
 
 export interface Message {
@@ -105,7 +126,21 @@ export interface Filters {
   department?: string;
   minInvestment?: number;
   maxInvestment?: number;
+  segments?: Segment[];
   sortBy: SortBy;
+}
+
+export interface CreateOpportunityDTO extends CreateFranchiseDTO {
+  segment?: Segment;
+  subtype?: string | null;
+  soughtAmount?: number | null;
+  availablePercentage?: number | null;
+  projectStart?: string | null;
+  projectEnd?: string | null;
+  mipeStage?: MipeStage | null;
+  pitch?: string | null;
+  videoUrl?: string | null;
+  formalizationPlan?: string | null;
 }
 
 export interface ProfileUpdateDTO {

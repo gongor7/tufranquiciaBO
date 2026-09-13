@@ -51,6 +51,7 @@
 - [x] T15. Tema y navegación global: paleta azul/dorado, tipografía, tabs y
       stack con las rutas de la spec. (RF-26, RF-27) Hecho cuando: demo manual
       recorre toda la app con el tema aplicado.
-- [ ] T16. Validación final: recorrer cada RF con su test, `tsc`, `eslint` y
+- [x] T16. Validación final: recorrer cada RF con su test, `tsc`, `eslint` y
       `jest` en verde + demo manual del flujo completo. (Todos) Hecho cuando:
       existe un test que cubre cada RF y la demo manual pasa sin errores.
+      *(Absorbida por T24 de la spec 002.)*

@@ -15,7 +15,7 @@ describe('Reconstrucción (RF-25)', () => {
     setExecutor(executor);
 
     const franchises = await FranchiseRepository.findAll({ sortBy: 'popular' });
-    expect(franchises.length).toBe(20);
+    expect(franchises.length).toBe(27); // activos: el proyecto vencido se excluye (RF-34)
   });
 
   it('un ejecutor "corrupto" que cae por esquema se recupera eliminando tablas y reseedando', async () => {
@@ -36,7 +36,7 @@ describe('Reconstrucción (RF-25)', () => {
     setExecutor(executor);
 
     const franchises = await FranchiseRepository.findAll({ sortBy: 'recent' });
-    expect(franchises.length).toBe(20);
+    expect(franchises.length).toBe(27); // activos: el proyecto vencido se excluye (RF-34)
     expect(franchises[0].name).toBeTruthy();
   });
 
@@ -50,6 +50,6 @@ describe('Reconstrucción (RF-25)', () => {
     }
     setExecutor(executor);
     const franchises = await FranchiseRepository.findAll({ sortBy: 'recent' });
-    expect(franchises.length).toBe(20);
+    expect(franchises.length).toBe(27); // activos: el proyecto vencido se excluye (RF-34)
   });
 });

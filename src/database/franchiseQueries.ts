@@ -34,6 +34,16 @@ export interface FranchiseRow {
   created_at: string;
   updated_at: string;
   is_favorite: number;
+  segment: string;
+  subtype: string | null;
+  sought_amount: number | null;
+  available_percentage: number | null;
+  project_start: string | null;
+  project_end: string | null;
+  mipe_stage: string | null;
+  pitch: string | null;
+  video_url: string | null;
+  formalization_plan: string | null;
 }
 
 export function mapFranchiseRow(row: FranchiseRow): Franchise {
@@ -71,6 +81,16 @@ export function mapFranchiseRow(row: FranchiseRow): Franchise {
     isFavorite: row.is_favorite === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    segment: row.segment as Franchise['segment'],
+    subtype: row.subtype,
+    soughtAmount: row.sought_amount,
+    availablePercentage: row.available_percentage,
+    projectStart: row.project_start,
+    projectEnd: row.project_end,
+    mipeStage: row.mipe_stage as Franchise['mipeStage'],
+    pitch: row.pitch,
+    videoUrl: row.video_url,
+    formalizationPlan: row.formalization_plan,
   };
 }
 
@@ -100,13 +120,25 @@ export function buildWhereClause(filters: Omit<Filters, 'sortBy'>): {
     clauses.push('f.department = ?');
     params.push(filters.department);
   }
+  if (filters.segments && filters.segments.length > 0) {
+    clauses.push(`f.segment IN (${filters.segments.map(() => '?').join(', ')})`);
+    params.push(...filters.segments);
+  }
+  // El rango de inversión aplica sobre min/max en franquicias y sobre el
+  // monto de participación buscado en los demás segmentos; sin monto
+  // definido la oportunidad no entra cuando hay filtro de monto (RF-33).
   if (filters.minInvestment != null) {
-    clauses.push('f.max_investment >= ?');
-    params.push(filters.minInvestment);
+    clauses.push('(f.max_investment >= ? OR (f.segment != \'franquicia\' AND f.sought_amount >= ?))');
+    params.push(filters.minInvestment, filters.minInvestment);
   }
   if (filters.maxInvestment != null) {
-    clauses.push('f.min_investment <= ?');
-    params.push(filters.maxInvestment);
+    clauses.push('(f.min_investment <= ? OR (f.segment != \'franquicia\' AND f.sought_amount <= ?))');
+    params.push(filters.maxInvestment, filters.maxInvestment);
+  }
+  // Los proyectos vencidos quedan fuera de los listados activos salvo que
+  // el filtro de segmentos los pida explícitamente (RF-34).
+  if (!filters.segments?.includes('proyecto')) {
+    clauses.push("NOT (f.segment = 'proyecto' AND f.project_end IS NOT NULL AND f.project_end < date('now'))");
   }
 
   return {

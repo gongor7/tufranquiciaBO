@@ -2,13 +2,14 @@
   "expo": {
     "name": "TuFranquiciaBO",
     "slug": "tufranquiciabo",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F8F9FA",
     "android": {
       "package": "bo.tufranquicia.app",
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#1B4965",
         "foregroundImage": "./assets/android-icon-foreground.png"

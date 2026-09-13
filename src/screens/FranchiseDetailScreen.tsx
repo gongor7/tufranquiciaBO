@@ -14,6 +14,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { colors, spacing, radii, typography } from '../theme';
 import { getIndustryLabel } from '../constants';
+import { MIPE_STAGE_LABELS, SEGMENT_LABELS, SUBTYPE_LABELS } from '../constants/segments';
 import { getFranchiseImage } from '../constants/images';
 import { FranchiseRepository } from '../database/repositories/franchise.repository';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
@@ -23,13 +24,14 @@ import { FormField } from '../components/ui/FormField';
 import { formatInvestmentRange, formatRoyalty } from '../utils/formatters';
 import { contactMessageSchema, ContactMessageFormValues } from '../utils/validators';
 import type { StackScreenProps } from '../navigation/types';
-import type { Franchise } from '../types';
+import type { Franchise, Milestone } from '../types';
 
 type Props = StackScreenProps<'FranchiseDetail'>;
 
 export function FranchiseDetailScreen({ route, navigation }: Props) {
   const { franchiseId } = route.params;
   const [franchise, setFranchise] = useState<Franchise | null>(null);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [contactOpen, setContactOpen] = useState(false);
   const [sent, setSent] = useState(false);
   const favorites = useFranchiseStore((s) => s.favorites);
@@ -47,6 +49,11 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
   const load = useCallback(async () => {
     const data = await FranchiseRepository.findById(franchiseId);
     setFranchise(data);
+    if (data?.segment === 'mipe') {
+      setMilestones(await FranchiseRepository.getMilestones(franchiseId));
+    } else {
+      setMilestones([]);
+    }
   }, [franchiseId]);
 
   useEffect(() => {
@@ -120,36 +127,109 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
           </View>
 
           <View style={styles.chipRow}>
+            <View style={[styles.chip, styles.chipSupport]}>
+              <Text style={[styles.chipText, styles.chipSupportText]}>
+                {SEGMENT_LABELS[franchise.segment]}
+                {franchise.subtype != null ? ` · ${SUBTYPE_LABELS[franchise.subtype] ?? franchise.subtype}` : ''}
+              </Text>
+            </View>
             <View style={styles.chip}>
               <Text style={styles.chipText}>{franchise.industryEmoji} {getIndustryLabel(franchise.industry)}</Text>
             </View>
             <View style={styles.chip}>
               <Text style={styles.chipText}>📍 {franchise.city}, {franchise.department}</Text>
             </View>
-            <View style={[styles.chip, styles.chipSupport]}>
-              <Text style={[styles.chipText, styles.chipSupportText]}>
-                🛠 Soporte {capitalize(franchise.supportLevel)}
-              </Text>
-            </View>
+            {franchise.segment === 'mipe' && franchise.mipeStage != null && (
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>🌱 {MIPE_STAGE_LABELS[franchise.mipeStage]}</Text>
+              </View>
+            )}
+            {franchise.segment === 'proyecto' && franchise.projectEnd != null && (
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>
+                  {isProjectExpired(franchise.projectEnd) ? '⏹ Proyecto cerrado' : '✅ Proyecto vigente'}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.investmentBanner}>
-            <Text style={styles.investmentLabel}>INVERSIÓN INICIAL ESTIMADA</Text>
+            <Text style={styles.investmentLabel}>
+              {franchise.segment === 'franquicia' ? 'INVERSIÓN INICIAL ESTIMADA' : 'MONTO DE PARTICIPACIÓN'}
+            </Text>
             <Text style={styles.investment}>
-              {formatInvestmentRange(franchise.minInvestment, franchise.maxInvestment, franchise.currency)}
+              {franchise.soughtAmount != null
+                ? `${franchise.soughtAmount === 0 ? 'A convenir' : formatMoney(franchise.soughtAmount, franchise.currency)}`
+                : formatInvestmentRange(franchise.minInvestment, franchise.maxInvestment, franchise.currency)}
             </Text>
           </View>
 
-          <View style={styles.stats}>
-            <Stat icon="📈" label="ROI estimado" value={franchise.estimatedRoi ?? '—'} />
-            <Stat
-              icon="💳"
-              label="Royalty"
-              value={formatRoyalty(franchise.royaltyPercentage, franchise.royaltyType)}
-            />
-            <Stat icon="👥" label="Empleados" value={`${franchise.employeesRequired}`} />
-            <Stat icon="🎓" label="Capacitación" value={`${franchise.trainingWeeks} semanas`} />
-          </View>
+          {franchise.segment === 'franquicia' && (
+            <View style={styles.stats}>
+              <Stat icon="📈" label="ROI estimado" value={franchise.estimatedRoi ?? '—'} />
+              <Stat
+                icon="💳"
+                label="Royalty"
+                value={formatRoyalty(franchise.royaltyPercentage, franchise.royaltyType)}
+              />
+              <Stat icon="👥" label="Empleados" value={`${franchise.employeesRequired}`} />
+              <Stat icon="🎓" label="Capacitación" value={`${franchise.trainingWeeks} semanas`} />
+            </View>
+          )}
+
+          {franchise.segment === 'sociedad' && franchise.availablePercentage != null && (
+            <View style={styles.stats}>
+              <Stat icon="🏛️" label="Tipo" value={SUBTYPE_LABELS[franchise.subtype ?? ''] ?? '—'} />
+              <Stat icon="🧩" label="Participación disponible" value={`${franchise.availablePercentage}%`} />
+            </View>
+          )}
+
+          {franchise.segment === 'proyecto' && franchise.projectStart != null && franchise.projectEnd != null && (
+            <View style={styles.stats}>
+              <Stat icon="📅" label="Inicio" value={franchise.projectStart} />
+              <Stat icon="🏁" label="Cierre" value={franchise.projectEnd} />
+            </View>
+          )}
+
+          {franchise.segment === 'mipe' && (
+            <>
+              {franchise.pitch != null && (
+                <>
+                  <Text style={styles.sectionTitle}>Pitch del emprendimiento</Text>
+                  <Text style={styles.description}>{franchise.pitch}</Text>
+                </>
+              )}
+              {franchise.videoUrl != null && franchise.videoUrl.length > 0 && (
+                <Button
+                  title="▶ Ver video del pitch"
+                  variant="outline"
+                  style={{ marginTop: spacing.md, width: undefined }}
+                  onPress={() => void Linking.openURL(franchise.videoUrl as string)}
+                />
+              )}
+              {milestones.length > 0 && (
+                <>
+                  <Text style={styles.sectionTitle}>Hitos de incubación</Text>
+                  <View style={styles.contactCard}>
+                    {milestones.map((milestone) => (
+                      <DetailRow
+                        key={milestone.id}
+                        icon={milestone.completed ? '✅' : '⬜'}
+                        label={`Hito ${milestone.position + 1}`}
+                        value={milestone.title}
+                      />
+                    ))}
+                  </View>
+                </>
+              )}
+              {franchise.formalizationPlan != null && (
+                <>
+                  <Text style={styles.sectionTitle}>Plan de formalización</Text>
+                  <Text style={styles.description}>{franchise.formalizationPlan}</Text>
+                </>
+              )}
+            </>
+          )}
 
           <Text style={styles.sectionTitle}>Sobre la franquicia</Text>
           <Text style={styles.description}>{franchise.description}</Text>
@@ -224,8 +304,13 @@ function DetailRow({ icon, label, value }: { icon: string; label: string; value:
   );
 }
 
-function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
+function isProjectExpired(projectEnd: string): boolean {
+  return projectEnd < new Date().toISOString().slice(0, 10);
+}
+
+function formatMoney(amount: number, currency: string): string {
+  const symbol = currency === 'USD' ? 'US$ ' : `${currency} `;
+  return `${symbol}${amount.toLocaleString('es-BO')}`;
 }
 
 interface ContactModalProps {

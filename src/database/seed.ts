@@ -1,12 +1,28 @@
 import type { CreateFranchiseDTO } from '../types';
 import { slugify } from '../utils/formatters';
 
+export interface SeedMilestone {
+  title: string;
+  targetDate?: string;
+  completed?: boolean;
+}
+
 export interface SeedFranchise extends CreateFranchiseDTO {
   logoEmoji: string;
   industryEmoji: string;
   featured: boolean;
   viewsCount: number;
   createdDaysAgo: number;
+  segment?: 'franquicia' | 'sociedad' | 'proyecto' | 'mipe';
+  subtype?: string;
+  availablePercentage?: number;
+  projectStart?: string;
+  projectEnd?: string;
+  mipeStage?: 'idea' | 'validado' | 'operativo';
+  pitch?: string;
+  videoUrl?: string;
+  formalizationPlan?: string;
+  milestones?: SeedMilestone[];
 }
 
 export const seedFranchises: SeedFranchise[] = [
@@ -530,21 +546,274 @@ export const seedFranchises: SeedFranchise[] = [
     viewsCount: 660,
     createdDaysAgo: 2,
   },
+  {
+    name: 'Distribuidora Andina SRL',
+    tagline: 'Capital social disponible para ampliar cobertura regional',
+    logoEmoji: '🏭',
+    industryEmoji: '📦',
+    industry: 'distribución',
+    description:
+      'SRL constituida ante SEPREC con 6 años de operación en la distribución de abarrotes entre La Paz y El Alto. Cuenta con flota propia de 5 vehículos, 3 centros de acopio y cartera de 420 puntos de venta activos. Se ofrece capital social para expandir la cobertura a Cochabamba y duplicar la flota.',
+    department: 'La Paz',
+    city: 'La Paz',
+    minInvestment: 50000,
+    maxInvestment: 50000,
+    royaltyPercentage: 0,
+    employeesRequired: 12,
+    trainingWeeks: 1,
+    supportLevel: 'basico',
+    contactName: 'Carlos Quisbert',
+    contactEmail: 'inversiones@distribuidoraandina.bo',
+    contactPhone: '+591 70011223',
+    featured: false,
+    viewsCount: 410,
+    createdDaysAgo: 30,
+    segment: 'sociedad',
+    subtype: 'srl',
+    availablePercentage: 30,
+    pitch:
+      'Compra de capital social: el inversionista ingresa al objeto social de la SRL con participación proporcional y responsabilidad limitada al aporte.',
+  },
+  {
+    name: 'Laboratorio Clínico Santa Bárbara SRL',
+    tagline: 'Capital social para segundo laboratorio en el norte',
+    logoEmoji: '🧪',
+    industryEmoji: '🏥',
+    industry: 'salud',
+    description:
+      'Laboratorio clínico con 8 años en Cochabamba, procesa 900 muestras mensuales con convenios con 4 clínicas privadas. Certificación ISO 9001 en trámite. Busca socios capitalistas para abrir una segunda sede en la zona norte con equipamiento de hematology y bioquímica de última generación.',
+    department: 'Cochabamba',
+    city: 'Cochabamba',
+    minInvestment: 85000,
+    maxInvestment: 85000,
+    royaltyPercentage: 0,
+    employeesRequired: 6,
+    trainingWeeks: 1,
+    supportLevel: 'basico',
+    contactName: 'Dra. Patricia Salazar',
+    contactEmail: 'gerencia@labsantabarbara.bo',
+    contactPhone: '+591 70222334',
+    featured: false,
+    viewsCount: 520,
+    createdDaysAgo: 45,
+    segment: 'sociedad',
+    subtype: 'srl',
+    availablePercentage: 25,
+    pitch:
+      'Aporte de capital social en SRL existente con utilidades demostrables; retorno por dividendos según participación.',
+  },
+  {
+    name: 'Textilera del Oriente SA',
+    tagline: 'Acciones para la nueva línea de exportación',
+    logoEmoji: '🧵',
+    industryEmoji: '🏭',
+    industry: 'manufactura',
+    description:
+      'Sociedad Anónima inscrita con 15 años en confección textil, exporta a Perú y Chile. Planta en El Alto con 60 operarios y certificación de origen para preferencias arancelarias. Emite acciones para financiar la nueva línea de exportación y ampliar capacidad en 40%.',
+    department: 'La Paz',
+    city: 'El Alto',
+    minInvestment: 120000,
+    maxInvestment: 120000,
+    royaltyPercentage: 0,
+    employeesRequired: 60,
+    trainingWeeks: 1,
+    supportLevel: 'basico',
+    contactName: 'Eduardo Vásquez',
+    contactEmail: 'relacioninversionistas@textileradeloriente.bo',
+    contactPhone: '+591 70333445',
+    featured: true,
+    viewsCount: 780,
+    createdDaysAgo: 60,
+    segment: 'sociedad',
+    subtype: 'sa',
+    availablePercentage: 20,
+    pitch:
+      'Emisión de acciones: el inversionista accede a la propiedad accionaria de la SA con derecho a dividendos y voto en junta.',
+  },
+  {
+    name: 'Agroindustria Beniana SA',
+    tagline: 'Acciones de planta de cacao y castaña orgánica',
+    logoEmoji: '🌰',
+    industryEmoji: '🌾',
+    industry: 'agroindustria',
+    description:
+      'SA agroindustrial con planta de procesamiento de cacao amazónico y castaña orgánica en Riberalta, con compra directa a 12 comunidades del TCO. Certificaciones orgánicas y de comercio justo vigentes. Abre su capital para duplicar la capacidad de tostado y lograr la certificación HACCP.',
+    department: 'Beni',
+    city: 'Riberalta',
+    minInvestment: 150000,
+    maxInvestment: 150000,
+    royaltyPercentage: 0,
+    employeesRequired: 45,
+    trainingWeeks: 1,
+    supportLevel: 'basico',
+    contactName: 'Ana Carla Justiniano',
+    contactEmail: 'inversion@agrobeniana.bo',
+    contactPhone: '+591 70444556',
+    featured: false,
+    viewsCount: 340,
+    createdDaysAgo: 75,
+    segment: 'sociedad',
+    subtype: 'sa',
+    availablePercentage: 15,
+    pitch:
+      'Suscripción de acciones de emisión nueva para expansión industrial con mercado asegurado en exportación.',
+  },
+  {
+    name: 'Proyecto Fexpocruz Gastronómico',
+    tagline: 'Cuentas en participación para la feria mayor',
+    logoEmoji: '🎪',
+    industryEmoji: '🎉',
+    industry: 'eventos',
+    description:
+      'Sociedad accidental (cuentas en participación) para operar 6 stands gastronómicos en la Feria Internacional de Cochabamba. Contrato de concesión ya adjudicado, proveedores cerrados y flujo proyectado por 21 días de feria. La sociedad se disuelve al concluir el evento con reparto de utilidades pactado.',
+    department: 'Cochabamba',
+    city: 'Cochabamba',
+    minInvestment: 15000,
+    maxInvestment: 15000,
+    royaltyPercentage: 0,
+    employeesRequired: 10,
+    trainingWeeks: 1,
+    supportLevel: 'basico',
+    contactName: 'Iván Fernández',
+    contactEmail: 'proyectos@fexpocruzgastronomico.bo',
+    contactPhone: '+591 70555667',
+    featured: false,
+    viewsCount: 290,
+    createdDaysAgo: 15,
+    segment: 'proyecto',
+    projectStart: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+    projectEnd: new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10),
+    pitch:
+      'Unión transitoria de partes para un fin específico: aporte único, participación en utilidades y disolución al cierre del evento.',
+  },
+  {
+    name: 'Proyecto Carnaval de Oruro 2026',
+    tagline: 'Conjunto invitado: estructura de palco y sponsors',
+    logoEmoji: '🎭',
+    industryEmoji: '🎉',
+    industry: 'eventos',
+    description:
+      'Cuentas en participación para la producción de palco premium y activos de patrocinio en la entrada del Carnaval de Oruro. Incluye permisos, escenografía, catering y venta de hospitalidad corporativa. Proyecto con temporalidad definida: se constituye en noviembre y se disuelve tras el balance de febrero.',
+    department: 'Oruro',
+    city: 'Oruro',
+    minInvestment: 25000,
+    maxInvestment: 25000,
+    royaltyPercentage: 0,
+    employeesRequired: 8,
+    trainingWeeks: 1,
+    supportLevel: 'basico',
+    contactName: 'Rocío Maldonado',
+    contactEmail: 'produccion@carnavalpalcos.bo',
+    contactPhone: '+591 70666778',
+    featured: false,
+    viewsCount: 430,
+    createdDaysAgo: 200,
+    segment: 'proyecto',
+    projectStart: '2026-11-01',
+    projectEnd: '2026-03-01',
+    pitch:
+      'Participación temporal con cierre contable al término del evento; trazabilidad completa de ingresos por palco y sponsors.',
+  },
+  {
+    name: 'AgroTech Chapare',
+    tagline: 'Plataforma de precios agrícolas en tiempo real',
+    logoEmoji: '🌾',
+    industryEmoji: '📱',
+    industry: 'tecnología',
+    description:
+      'MIPE tecnológico validado con productores de coca legal, plátano y yuca del Chapare: app de precios de mercado por SMS y web, ya usada por 1.800 productores. Busca ronda semilla para contratar desarrollo full-time y escalar a los valles. La plataforma acompaña su formalización como empresa unipersonal ante SEPREC.',
+    department: 'Cochabamba',
+    city: 'Villa Tunari',
+    minInvestment: 0,
+    maxInvestment: 40000,
+    royaltyPercentage: 0,
+    employeesRequired: 3,
+    trainingWeeks: 1,
+    supportLevel: 'basico',
+    contactName: 'Marco Antonio Mamani',
+    contactEmail: 'hola@agrotechchapare.bo',
+    contactPhone: '+591 70777889',
+    featured: true,
+    viewsCount: 610,
+    createdDaysAgo: 10,
+    segment: 'mipe',
+    mipeStage: 'validado',
+    pitch:
+      'Producto con tracción real (1.800 productores activos, retención semanal del 60%) buscando capital semilla para profesionalizar el equipo técnico.',
+    videoUrl: 'https://www.youtube.com/watch?v=agrotech-chapare-pitch',
+    formalizationPlan:
+      '1) Constitución unipersonal ante SEPREC (mes 1). 2) NIT y facturación (mes 1). 3) Registro de marca ante SENAPI (mes 2). 4) Auditoría básica del primer cierre (mes 6).',
+    milestones: [
+      { title: 'Constitución legal ante SEPREC', completed: false },
+      { title: 'NIT y régimen general', completed: false },
+      { title: '500 productores adicionales', completed: false },
+      { title: 'Primer cierre auditable', completed: false },
+    ],
+  },
+  {
+    name: 'Quesería Alto Beni',
+    tagline: 'Quesos artesanales de colonos alteños, listos para crecer',
+    logoEmoji: '🧀',
+    industryEmoji: '🥛',
+    industry: 'agroindustria',
+    description:
+      'MIPE familiar en etapa operativa: quesos frescos y madurados de leche de 40 vacas propias, vendidos en 9 mercados de La Paz y El Alto. Sin deudas y con punto de equilibrio cubierto. Necesita capital para sala de maduración certificada y registro sanitario para ingresar a supermercados de cadena.',
+    department: 'La Paz',
+    city: 'Alto Beni',
+    minInvestment: 0,
+    maxInvestment: 18000,
+    royaltyPercentage: 0,
+    employeesRequired: 4,
+    trainingWeeks: 1,
+    supportLevel: 'basico',
+    contactName: 'Herman Chipana',
+    contactEmail: 'ventas@queseriaaltobeni.bo',
+    contactPhone: '+591 70888990',
+    featured: false,
+    viewsCount: 250,
+    createdDaysAgo: 20,
+    segment: 'mipe',
+    mipeStage: 'operativo',
+    pitch:
+      'Negocio en operación con ventas estables y margen del 35%; el capital acelera la certificación sanitaria y el canal supermercados.',
+    videoUrl: 'https://www.youtube.com/watch?v=queseria-alto-beni',
+    formalizationPlan:
+      '1) Registro sanitario SENASAG (mes 2). 2) Marca ante SENAPI (mes 3). 3) Buenas prácticas de manufactura auditadas (mes 5). 4) Portafolio para supermercados (mes 7).',
+    milestones: [
+      { title: 'Registro sanitario SENASAG', completed: false },
+      { title: 'Sala de maduración equipada', completed: false },
+      { title: 'Ingreso a 2 cadenas de supermercados', completed: false },
+    ],
+  },
 ];
+
+const FRANCHISE_SUBTYPE_OVERRIDES: Record<string, string> = {
+  'Salteñitas del Sur': 'nacional',
+  'Café Amazonas': 'departamental',
+  'Parrilla Criolla': 'nacional',
+};
 
 export function buildSeedRows(dbNowDaysAgo: number): {
   sql: string;
   params: (string | number | null)[][];
+  milestonesByIndex: Record<number, SeedMilestone[]>;
 } {
   const now = Date.now();
   const rows: (string | number | null)[][] = [];
+  const milestonesByIndex: Record<number, SeedMilestone[]> = {};
 
-  for (const f of seedFranchises) {
+  seedFranchises.forEach((f, index) => {
+    const segment = f.segment ?? 'franquicia';
     const createdAt = new Date(now - f.createdDaysAgo * 86400000)
       .toISOString()
       .replace('T', ' ')
       .slice(0, 19);
     const updatedAt = createdAt;
+    const subtype =
+      f.subtype ??
+      (segment === 'franquicia'
+        ? FRANCHISE_SUBTYPE_OVERRIDES[f.name] ?? 'individual'
+        : null);
     rows.push([
       null,
       f.name,
@@ -577,8 +846,21 @@ export function buildSeedRows(dbNowDaysAgo: number): {
       0,
       createdAt,
       updatedAt,
+      segment,
+      subtype,
+      segment === 'franquicia' ? null : f.minInvestment,
+      f.availablePercentage ?? null,
+      f.projectStart ?? null,
+      f.projectEnd ?? null,
+      f.mipeStage ?? null,
+      f.pitch ?? null,
+      f.videoUrl ?? null,
+      f.formalizationPlan ?? null,
     ]);
-  }
+    if (f.milestones?.length) {
+      milestonesByIndex[index] = f.milestones;
+    }
+  });
 
   const sql = `
     INSERT INTO franchises (
@@ -587,11 +869,18 @@ export function buildSeedRows(dbNowDaysAgo: number): {
       currency, royalty_percentage, royalty_type, estimated_roi, employees_required,
       training_weeks, support_level, website, contact_name, contact_email,
       contact_phone, whatsapp, featured, status, views_count, inquiries_count,
-      created_at, updated_at
+      created_at, updated_at, segment, subtype, sought_amount,
+      available_percentage, project_start, project_end, mipe_stage, pitch,
+      video_url, formalization_plan
     ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     );
   `;
 
-  return { sql, params: rows };
+  return { sql, params: rows, milestonesByIndex };
 }
+
+export const MILESTONES_INSERT_SQL = `
+  INSERT INTO milestones (franchise_id, position, title, target_date, completed)
+  VALUES (?, ?, ?, ?, ?);
+`;

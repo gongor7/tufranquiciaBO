@@ -6,22 +6,32 @@ import {
   Text,
   View,
 } from 'react-native';
+import { z } from 'zod';
 import { colors, spacing, radii, typography } from '../theme';
 import { departments, industries, getIndustry, getIndustryLabel } from '../constants';
+import { SEGMENTS, SUBTYPE_LABELS } from '../constants/segments';
 import { useUserStore } from '../stores/useUserStore';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { FormField } from '../components/ui/FormField';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { FranchiseRepository } from '../database/repositories/franchise.repository';
-import { createFranchiseBaseSchema, CreateFranchiseFormValues } from '../utils/validators';
+import { createFranchiseBaseSchema } from '../utils/validators';
+import {
+  societySchema,
+  projectSchema,
+  mipeSchema,
+} from '../utils/segmentValidators';
 import { formatInvestmentRange } from '../utils/formatters';
 import type { StackScreenProps } from '../navigation/types';
-import type { SupportLevel } from '../types';
+import type { MipeStage, Segment, SupportLevel } from '../types';
 
 type Props = StackScreenProps<'Register'>;
 
 interface StepState {
+  segment: Segment | '';
+  subtype: string;
+  mipeStage: string;
   name: string;
   tagline: string;
   industry: string;
@@ -32,6 +42,13 @@ interface StepState {
   maxInvestment: string;
   royaltyPercentage: string;
   estimatedRoi: string;
+  soughtAmount: string;
+  availablePercentage: string;
+  projectStart: string;
+  projectEnd: string;
+  pitch: string;
+  videoUrl: string;
+  formalizationPlan: string;
   employeesRequired: string;
   trainingWeeks: string;
   supportLevel: SupportLevel;
@@ -43,6 +60,9 @@ interface StepState {
 }
 
 const initialStep: StepState = {
+  segment: '',
+  subtype: '',
+  mipeStage: '',
   name: '',
   tagline: '',
   industry: '',
@@ -53,6 +73,13 @@ const initialStep: StepState = {
   maxInvestment: '',
   royaltyPercentage: '',
   estimatedRoi: '',
+  soughtAmount: '',
+  availablePercentage: '',
+  projectStart: '',
+  projectEnd: '',
+  pitch: '',
+  videoUrl: '',
+  formalizationPlan: '',
   employeesRequired: '',
   trainingWeeks: '',
   supportLevel: 'basico',
@@ -68,6 +95,30 @@ const supportOptions = [
   { label: 'Avanzado', value: 'avanzado' },
   { label: 'Premium', value: 'premium' },
 ];
+
+const franchiseSubtypeOptions = [
+  { label: 'Individual', value: 'individual' },
+  { label: 'Departamental', value: 'departamental' },
+  { label: 'Nacional', value: 'nacional' },
+];
+
+const societySubtypeOptions = [
+  { label: 'SRL — capital social', value: 'srl' },
+  { label: 'SA — acciones', value: 'sa' },
+];
+
+const mipeStageOptions = [
+  { label: 'En idea', value: 'idea' },
+  { label: 'Validado', value: 'validado' },
+  { label: 'Operativo', value: 'operativo' },
+];
+
+const SEGMENT_TITLES: Record<string, string> = {
+  franquicia: 'franquicia',
+  sociedad: 'sociedad',
+  proyecto: 'proyecto',
+  mipe: 'emprendimiento (MIPE)',
+};
 
 export function RegisterScreen({ navigation }: Props) {
   const [state, setState] = useState<StepState>(initialStep);
@@ -102,7 +153,7 @@ export function RegisterScreen({ navigation }: Props) {
           <Text style={{ fontSize: 56, textAlign: 'center' }}>👤</Text>
           <Text style={styles.title}>Se requiere rol de franquiciador</Text>
           <Text style={styles.notice}>
-            Para registrar una franquicia primero cambia tu rol a «franquiciador» desde tu
+            Para registrar una oportunidad primero cambia tu rol a «franquiciador» desde tu
             perfil.
           </Text>
           <Button
@@ -117,6 +168,9 @@ export function RegisterScreen({ navigation }: Props) {
     );
   }
 
+  const segment = state.segment;
+  const stepCount = 4;
+
   const setField = (key: keyof StepState, value: string) => {
     setState((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => {
@@ -126,50 +180,87 @@ export function RegisterScreen({ navigation }: Props) {
     });
   };
 
-  const validateStep = (): boolean => {
-    const draft: CreateFranchiseFormValues = {
-      name: state.name,
-      tagline: state.tagline || undefined,
-      industry: state.industry,
-      description: state.description,
-      department: state.department,
-      city: state.city,
-      minInvestment: Number(state.minInvestment),
-      maxInvestment: Number(state.maxInvestment),
-      royaltyPercentage: Number(state.royaltyPercentage),
-      estimatedRoi: state.estimatedRoi || undefined,
-      employeesRequired: Number(state.employeesRequired),
-      trainingWeeks: Number(state.trainingWeeks),
-      supportLevel: state.supportLevel,
-      website: state.website,
-      contactName: state.contactName,
-      contactEmail: state.contactEmail,
-      contactPhone: state.contactPhone || undefined,
-      whatsapp: state.whatsapp || undefined,
-    };
+  const draft = () => ({
+    segment: state.segment || undefined,
+    subtype: state.subtype || undefined,
+    mipeStage: state.mipeStage || undefined,
+    name: state.name,
+    tagline: state.tagline || undefined,
+    industry: state.industry,
+    description: state.description,
+    department: state.department,
+    city: state.city,
+    minInvestment: Number(state.minInvestment) || 0,
+    maxInvestment: Number(state.maxInvestment) || 0,
+    soughtAmount: state.soughtAmount === '' ? undefined : Number(state.soughtAmount),
+    availablePercentage:
+      state.availablePercentage === '' ? undefined : Number(state.availablePercentage),
+    projectStart: state.projectStart || undefined,
+    projectEnd: state.projectEnd || undefined,
+    pitch: state.pitch || undefined,
+    videoUrl: state.videoUrl || undefined,
+    formalizationPlan: state.formalizationPlan || undefined,
+    royaltyPercentage: Number(state.royaltyPercentage) || 0,
+    estimatedRoi: state.estimatedRoi || undefined,
+    employeesRequired: Number(state.employeesRequired) || 1,
+    trainingWeeks: Number(state.trainingWeeks) || 1,
+    supportLevel: state.supportLevel,
+    website: state.website,
+    contactName: state.contactName,
+    contactEmail: state.contactEmail,
+    contactPhone: state.contactPhone || undefined,
+    whatsapp: state.whatsapp || undefined,
+  });
 
-    const stepKeys =
-      step === 1
-        ? ({ name: true, tagline: true, industry: true, description: true } as const)
-        : step === 2
-          ? ({
-              department: true,
-              city: true,
-              minInvestment: true,
-              maxInvestment: true,
-              royaltyPercentage: true,
-              estimatedRoi: true,
-            } as const)
-          : step === 3
-            ? ({
-                employeesRequired: true,
-                trainingWeeks: true,
-                supportLevel: true,
-                website: true,
-              } as const)
-            : ({ contactName: true, contactEmail: true, contactPhone: true, whatsapp: true } as const);
-    const partial = createFranchiseBaseSchema.pick(stepKeys);
-    const result = partial.safeParse(draft);
+  const schemaForSegment = (): z.ZodTypeAny | null => {
+    if (segment === 'sociedad') return societySchema;
+    if (segment === 'proyecto') return projectSchema;
+    if (segment === 'mipe') return mipeSchema;
+    if (segment === 'franquicia') return createFranchiseBaseSchema;
+    return null;
+  };
+
+  const stepKeysForSegment = (): Record<string, true> | null => {
+    if (segment == null || segment === '') return null;
+    const common1 = { segment: true, subtype: true, mipeStage: true, name: true, tagline: true, industry: true, description: true } as const;
+    if (step === 1) return common1;
+    if (step === 2) {
+      const common2 = { department: true, city: true } as const;
+      if (segment === 'franquicia') {
+        return { ...common2, minInvestment: true, maxInvestment: true, royaltyPercentage: true, estimatedRoi: true };
+      }
+      if (segment === 'sociedad') {
+        return { ...common2, soughtAmount: true, availablePercentage: true };
+      }
+      if (segment === 'proyecto') {
+        return { ...common2, soughtAmount: true, projectStart: true, projectEnd: true };
+      }
+      return { ...common2, soughtAmount: true };
+    }
+    if (step === 3) {
+      if (segment === 'franquicia') {
+        return { employeesRequired: true, trainingWeeks: true, supportLevel: true, website: true };
+      }
+      if (segment === 'mipe') {
+        return { pitch: true, videoUrl: true, formalizationPlan: true, website: true };
+      }
+      return { website: true };
+    }
+    return { contactName: true, contactEmail: true, contactPhone: true, whatsapp: true };
+  };
+
+  const validateStep = (): boolean => {
+    if (segment === '' || segment == null) {
+      setErrors({ segment: 'Seleccioná el segmento de tu oportunidad' });
+      return false;
+    }
+
+    const schema = schemaForSegment();
+    const keys = stepKeysForSegment();
+    if (schema == null || keys == null) return false;
+
+    const partial = (schema as z.ZodObject<z.ZodRawShape>).pick(keys);
+    const result = partial.safeParse(draft());
 
     if (!result.success) {
       const nextErrors: Record<string, string> = {};
@@ -184,10 +275,9 @@ export function RegisterScreen({ navigation }: Props) {
     }
 
     if (
+      segment === 'franquicia' &&
       step === 2 &&
-      result.data.minInvestment != null &&
-      result.data.maxInvestment != null &&
-      Number(result.data.maxInvestment) < Number(result.data.minInvestment)
+      Number(state.maxInvestment) < Number(state.minInvestment)
     ) {
       setErrors({ maxInvestment: 'La inversión máxima no puede ser menor que la mínima' });
       return false;
@@ -201,7 +291,7 @@ export function RegisterScreen({ navigation }: Props) {
     if (!validateStep()) {
       return;
     }
-    if (step < 4) {
+    if (step < stepCount) {
       setStep(step + 1);
     }
   };
@@ -211,48 +301,81 @@ export function RegisterScreen({ navigation }: Props) {
       return;
     }
     const dto = {
-      name: state.name,
-      tagline: state.tagline || undefined,
-      industry: state.industry,
-      description: state.description,
-      department: state.department,
-      city: state.city,
-      minInvestment: Number(state.minInvestment),
-      maxInvestment: Number(state.maxInvestment),
-      royaltyPercentage: Number(state.royaltyPercentage),
-      estimatedRoi: state.estimatedRoi || undefined,
-      employeesRequired: Number(state.employeesRequired),
-      trainingWeeks: Number(state.trainingWeeks),
-      supportLevel: state.supportLevel,
-      website: state.website || undefined,
-      contactName: state.contactName,
-      contactEmail: state.contactEmail,
-      contactPhone: state.contactPhone || undefined,
-      whatsapp: state.whatsapp || undefined,
+      ...draft(),
+      segment: segment as Segment,
+      subtype: state.subtype || undefined,
+      mipeStage: (state.mipeStage || undefined) as MipeStage | undefined,
     };
     const created = await FranchiseRepository.create(dto);
     await useFranchiseStore.getState().refresh();
-    Alert.alert('¡Franquicia publicada!', `«${created.name}» ya está disponible en el marketplace.`);
+    Alert.alert('¡Publicación exitosa!', `«${created.name}» ya está disponible en el marketplace.`);
     navigation.goBack();
   };
 
-  const stepTitles = ['Datos básicos', 'Datos financieros', 'Operaciones', 'Contacto y publicación'];
+  const stepTitles = [
+    'Datos básicos',
+    segment === '' ? 'Datos básicos' : 'Ubicación y finanzas',
+    segment === 'mipe' ? 'Pitch e incubación' : 'Operaciones',
+    'Contacto y publicación',
+  ];
 
   return (
     <View style={styles.container}>
       <View style={styles.stepHeader}>
-        <Text style={styles.muted}>Paso {step} de 4</Text>
+        <Text style={styles.muted}>Paso {step} de {stepCount}</Text>
         <Text style={styles.stepTitle}>{stepTitles[step - 1]}</Text>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressBar, { width: `${step * 25}%` }]} />
+          <View style={[styles.progressBar, { width: `${(step / stepCount) * 100}%` }]} />
         </View>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xxl }}>
         {step === 1 && (
           <>
+            <Select
+              label="¿Qué querés publicar? *"
+              selectedValue={state.segment}
+              options={SEGMENTS.map((s) => ({ label: `${s.emoji} ${s.label}`, value: s.id }))}
+              onSelect={(value) => setField('segment', value)}
+            />
+            {errors.segment != null && <Text style={styles.error}>{errors.segment}</Text>}
+
+            {segment === 'franquicia' && (
+              <>
+                <Select
+                  label="Alcance de la franquicia *"
+                  selectedValue={state.subtype}
+                  options={franchiseSubtypeOptions}
+                  onSelect={(value) => setField('subtype', value)}
+                />
+                {errors.subtype != null && <Text style={styles.error}>{errors.subtype}</Text>}
+              </>
+            )}
+            {segment === 'sociedad' && (
+              <>
+                <Select
+                  label="Tipo de sociedad *"
+                  selectedValue={state.subtype}
+                  options={societySubtypeOptions}
+                  onSelect={(value) => setField('subtype', value)}
+                />
+                {errors.subtype != null && <Text style={styles.error}>{errors.subtype}</Text>}
+              </>
+            )}
+            {segment === 'mipe' && (
+              <>
+                <Select
+                  label="Etapa del emprendimiento *"
+                  selectedValue={state.mipeStage}
+                  options={mipeStageOptions}
+                  onSelect={(value) => setField('mipeStage', value)}
+                />
+                {errors.mipeStage != null && <Text style={styles.error}>{errors.mipeStage}</Text>}
+              </>
+            )}
+
             <FormField
-              label="Nombre de la franquicia *"
+              label={`Nombre de la ${segment === '' ? 'oportunidad' : SEGMENT_TITLES[segment]} *`}
               placeholder="Ej. Café Amazonas"
               value={state.name}
               onChangeText={(text) => setField('name', text)}
@@ -301,64 +424,167 @@ export function RegisterScreen({ navigation }: Props) {
               onChangeText={(text) => setField('city', text)}
               error={errors.city}
             />
-            <FormField
-              label="Inversión mínima (USD) *"
-              placeholder="Ej. 25000"
-              keyboardType="number-pad"
-              value={state.minInvestment}
-              onChangeText={(text) => setField('minInvestment', text)}
-              error={errors.minInvestment}
-            />
-            <FormField
-              label="Inversión máxima (USD) *"
-              placeholder="Ej. 40000"
-              keyboardType="number-pad"
-              value={state.maxInvestment}
-              onChangeText={(text) => setField('maxInvestment', text)}
-              error={errors.maxInvestment}
-            />
-            <FormField
-              label="Royalty (%) *"
-              placeholder="Ej. 5"
-              keyboardType="number-pad"
-              value={state.royaltyPercentage}
-              onChangeText={(text) => setField('royaltyPercentage', text)}
-              error={errors.royaltyPercentage}
-            />
-            <FormField
-              label="ROI estimado"
-              placeholder="Ej. 20%"
-              value={state.estimatedRoi}
-              onChangeText={(text) => setField('estimatedRoi', text)}
-              error={errors.estimatedRoi}
-            />
+
+            {segment === 'franquicia' && (
+              <>
+                <FormField
+                  label="Inversión mínima (USD) *"
+                  placeholder="Ej. 25000"
+                  keyboardType="number-pad"
+                  value={state.minInvestment}
+                  onChangeText={(text) => setField('minInvestment', text)}
+                  error={errors.minInvestment}
+                />
+                <FormField
+                  label="Inversión máxima (USD) *"
+                  placeholder="Ej. 40000"
+                  keyboardType="number-pad"
+                  value={state.maxInvestment}
+                  onChangeText={(text) => setField('maxInvestment', text)}
+                  error={errors.maxInvestment}
+                />
+                <FormField
+                  label="Royalty (%) *"
+                  placeholder="Ej. 5"
+                  keyboardType="number-pad"
+                  value={state.royaltyPercentage}
+                  onChangeText={(text) => setField('royaltyPercentage', text)}
+                  error={errors.royaltyPercentage}
+                />
+                <FormField
+                  label="ROI estimado"
+                  placeholder="Ej. 20%"
+                  value={state.estimatedRoi}
+                  onChangeText={(text) => setField('estimatedRoi', text)}
+                  error={errors.estimatedRoi}
+                />
+              </>
+            )}
+
+            {segment === 'sociedad' && (
+              <>
+                <FormField
+                  label="Monto de participación buscado (USD) *"
+                  placeholder="Ej. 90000"
+                  keyboardType="number-pad"
+                  value={state.soughtAmount}
+                  onChangeText={(text) => setField('soughtAmount', text)}
+                  error={errors.soughtAmount}
+                />
+                <FormField
+                  label="Porcentaje disponible (1-100) *"
+                  placeholder="Ej. 25"
+                  keyboardType="number-pad"
+                  value={state.availablePercentage}
+                  onChangeText={(text) => setField('availablePercentage', text)}
+                  error={errors.availablePercentage}
+                />
+              </>
+            )}
+
+            {segment === 'proyecto' && (
+              <>
+                <FormField
+                  label="Aporte requerido (USD) *"
+                  placeholder="Ej. 15000"
+                  keyboardType="number-pad"
+                  value={state.soughtAmount}
+                  onChangeText={(text) => setField('soughtAmount', text)}
+                  error={errors.soughtAmount}
+                />
+                <FormField
+                  label="Fecha de inicio *"
+                  placeholder="AAAA-MM-DD"
+                  value={state.projectStart}
+                  onChangeText={(text) => setField('projectStart', text)}
+                  error={errors.projectStart}
+                />
+                <FormField
+                  label="Fecha de fin *"
+                  placeholder="AAAA-MM-DD"
+                  value={state.projectEnd}
+                  onChangeText={(text) => setField('projectEnd', text)}
+                  error={errors.projectEnd}
+                />
+              </>
+            )}
+
+            {segment === 'mipe' && (
+              <FormField
+                label="Monto buscado (USD, opcional — 0 si aún no lo definís)"
+                placeholder="Ej. 20000"
+                keyboardType="number-pad"
+                value={state.soughtAmount}
+                onChangeText={(text) => setField('soughtAmount', text)}
+                error={errors.soughtAmount}
+              />
+            )}
           </>
         )}
 
         {step === 3 && (
           <>
-            <FormField
-              label="Empleados requeridos *"
-              placeholder="Ej. 4"
-              keyboardType="number-pad"
-              value={state.employeesRequired}
-              onChangeText={(text) => setField('employeesRequired', text)}
-              error={errors.employeesRequired}
-            />
-            <FormField
-              label="Semanas de entrenamiento *"
-              placeholder="Ej. 3"
-              keyboardType="number-pad"
-              value={state.trainingWeeks}
-              onChangeText={(text) => setField('trainingWeeks', text)}
-              error={errors.trainingWeeks}
-            />
-            <Select
-              label="Nivel de soporte *"
-              selectedValue={state.supportLevel}
-              options={supportOptions}
-              onSelect={(value) => setField('supportLevel', value)}
-            />
+            {segment === 'franquicia' && (
+              <>
+                <FormField
+                  label="Empleados requeridos *"
+                  placeholder="Ej. 4"
+                  keyboardType="number-pad"
+                  value={state.employeesRequired}
+                  onChangeText={(text) => setField('employeesRequired', text)}
+                  error={errors.employeesRequired}
+                />
+                <FormField
+                  label="Semanas de entrenamiento *"
+                  placeholder="Ej. 3"
+                  keyboardType="number-pad"
+                  value={state.trainingWeeks}
+                  onChangeText={(text) => setField('trainingWeeks', text)}
+                  error={errors.trainingWeeks}
+                />
+                <Select
+                  label="Nivel de soporte *"
+                  selectedValue={state.supportLevel}
+                  options={supportOptions}
+                  onSelect={(value) => setField('supportLevel', value)}
+                />
+              </>
+            )}
+
+            {segment === 'mipe' && (
+              <>
+                <FormField
+                  label="Pitch *"
+                  placeholder="Vendé tu emprendimiento en pocas frases..."
+                  multiline
+                  numberOfLines={4}
+                  style={{ minHeight: 90, textAlignVertical: 'top' }}
+                  value={state.pitch}
+                  onChangeText={(text) => setField('pitch', text)}
+                  error={errors.pitch}
+                />
+                <FormField
+                  label="Video del pitch (URL)"
+                  placeholder="https://youtube.com/..."
+                  keyboardType="url"
+                  autoCapitalize="none"
+                  value={state.videoUrl}
+                  onChangeText={(text) => setField('videoUrl', text)}
+                  error={errors.videoUrl}
+                />
+                <FormField
+                  label="Plan de formalización *"
+                  placeholder="SEPREC, NIT, SENAPI..."
+                  multiline
+                  numberOfLines={3}
+                  style={{ minHeight: 70, textAlignVertical: 'top' }}
+                  value={state.formalizationPlan}
+                  onChangeText={(text) => setField('formalizationPlan', text)}
+                  error={errors.formalizationPlan}
+                />
+              </>
+            )}
+
             <FormField
               label="Sitio web"
               placeholder="https://..."
@@ -382,7 +608,7 @@ export function RegisterScreen({ navigation }: Props) {
             />
             <FormField
               label="Email de contacto *"
-              placeholder="contacto@franquicia.bo"
+              placeholder="contacto@negocio.bo"
               keyboardType="email-address"
               autoCapitalize="none"
               value={state.contactEmail}
@@ -411,22 +637,25 @@ export function RegisterScreen({ navigation }: Props) {
               <View style={styles.previewRow}>
                 <Text style={styles.previewEmoji}>{getIndustry(state.industry)?.emoji ?? '🏢'}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.previewName}>{state.name || 'Tu franquicia'}</Text>
+                  <Text style={styles.previewName}>{state.name || 'Tu oportunidad'}</Text>
                   <Text style={styles.previewMeta}>
-                    {getIndustryLabel(state.industry) || 'Categoría'} · {state.city || 'Ciudad'} ·{' '}
-                    {state.department || 'Departamento'}
+                    {segment !== '' && SEGMENTS.find((s) => s.id === segment)?.label}
+                    {state.subtype !== '' ? ` · ${SUBTYPE_LABELS[state.subtype] ?? state.subtype}` : ''} ·{' '}
+                    {getIndustryLabel(state.industry) || 'Categoría'} · {state.city || 'Ciudad'}
                   </Text>
                   <Text style={styles.previewInvestment}>
-                    {state.minInvestment != null && state.maxInvestment != null
+                    {segment === 'franquicia'
                       ? formatInvestmentRange(
                           Number(state.minInvestment) || 0,
                           Number(state.maxInvestment) || 0,
                         )
-                      : 'Rango de inversión'}
+                      : state.soughtAmount !== ''
+                        ? `Monto: US$ ${Number(state.soughtAmount).toLocaleString('es-BO')}`
+                        : 'Monto a convenir'}
                   </Text>
                 </View>
               </View>
-              {state.description != null && (
+              {state.description !== '' && (
                 <Text style={styles.previewDesc} numberOfLines={3}>
                   {state.description}
                 </Text>
@@ -440,10 +669,10 @@ export function RegisterScreen({ navigation }: Props) {
         {step > 1 && (
           <Button title="Atrás" variant="ghost" onPress={() => setStep(step - 1)} />
         )}
-        {step < 4 ? (
+        {step < stepCount ? (
           <Button title="Siguiente" onPress={next} />
         ) : (
-          <Button title="Publicar franquicia" onPress={() => void publish()} />
+          <Button title="Publicar" onPress={() => void publish()} />
         )}
       </View>
     </View>

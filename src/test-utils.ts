@@ -1,8 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
 import { setExecutor } from './database';
 import type { SqlExecutor } from './database/executor';
-import { SCHEMA_SQL } from './database/schema';
-import { buildSeedRows } from './database/seed';
+import { SCHEMA_SQL, SCHEMA_VERSION } from './database/schema';
+import { buildSeedRows, MILESTONES_INSERT_SQL } from './database/seed';
 
 function toNumber(value: number | bigint): number {
   return typeof value === 'bigint' ? Number(value) : value;
@@ -37,9 +37,19 @@ export async function createTestDb(options?: { seed?: boolean }): Promise<SqlExe
 
   const insertSeed = options?.seed ?? true;
   if (insertSeed) {
-    const { sql, params } = buildSeedRows(0);
-    for (const row of params) {
-      await executor.run(sql, row);
+    const { sql, params, milestonesByIndex } = buildSeedRows(0);
+    for (const [index, row] of params.entries()) {
+      const { lastInsertId } = await executor.run(sql, row);
+      const franchiseId = lastInsertId ?? 0;
+      for (const [position, milestone] of (milestonesByIndex[index] ?? []).entries()) {
+        await executor.run(MILESTONES_INSERT_SQL, [
+          franchiseId,
+          position,
+          milestone.title,
+          milestone.targetDate ?? null,
+          milestone.completed ? 1 : 0,
+        ]);
+      }
     }
   }
 
@@ -50,6 +60,7 @@ export async function createTestDb(options?: { seed?: boolean }): Promise<SqlExe
     [now, now],
   );
 
+  await executor.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   setExecutor(executor);
   return executor;
 }

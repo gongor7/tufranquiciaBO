@@ -3,13 +3,14 @@ import { FlatList, ScrollView, StyleSheet, Text, TextInput, View } from 'react-n
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radii, typography } from '../theme';
 import { departments, industries, getIndustry } from '../constants';
+import { SEGMENTS } from '../constants/segments';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { FranchiseCard } from '../components/features/FranchiseCard';
 import { Chip } from '../components/ui/Chip';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Button } from '../components/ui/Button';
 import type { TabScreenProps } from '../navigation/types';
-import type { Franchise, SortBy } from '../types';
+import type { Franchise, Segment as Segments, SortBy } from '../types';
 
 type Navigation = TabScreenProps<'Explore'>['navigation'];
 
@@ -43,10 +44,19 @@ export function ExploreScreen() {
     (filters.industry ? 1 : 0) +
     (filters.department ? 1 : 0) +
     (filters.minInvestment != null ? 1 : 0) +
-    (filters.maxInvestment != null ? 1 : 0);
+    (filters.maxInvestment != null ? 1 : 0) +
+    (filters.segments?.length ? 1 : 0);
 
   const openDetail = (franchise: Franchise) =>
     navigation.navigate('FranchiseDetail', { franchiseId: franchise.id });
+
+  const toggleSegment = (segment: Segments) => {
+    const current = filters.segments ?? [];
+    const next = current.includes(segment)
+      ? current.filter((s) => s !== segment)
+      : [...current, segment];
+    setFilters({ segments: next.length > 0 ? next : undefined });
+  };
 
   const toggleIndustry = (industry: string) => {
     const next = filters.industry === industry ? undefined : industry;
@@ -72,6 +82,20 @@ export function ExploreScreen() {
   return (
     <View style={styles.container}>
       <SectionTitle>Explorar</SectionTitle>
+
+      <View style={styles.sortRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {SEGMENTS.map((segment) => (
+            <Chip
+              key={segment.id}
+              label={segment.label}
+              emoji={segment.emoji}
+              selected={(filters.segments ?? []).includes(segment.id)}
+              onPress={() => toggleSegment(segment.id)}
+            />
+          ))}
+        </ScrollView>
+      </View>
 
       <View style={styles.sortRow}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -157,7 +181,7 @@ export function ExploreScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyEmoji}>{showFilters || activeFilters > 0 ? '🔍' : '🏪'}</Text>
-            <Text style={styles.emptyTitle}>No hay franquicias para mostrar</Text>
+            <Text style={styles.emptyTitle}>No hay oportunidades para mostrar</Text>
             <Text style={styles.emptyText}>
               {activeFilters > 0
                 ? 'Prueba con otros filtros o limpia la búsqueda.'

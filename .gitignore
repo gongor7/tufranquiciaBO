@@ -47,5 +47,10 @@ dist/
 
 # binarios de distribucion (van en GitHub Releases)
 apk/
+
+# marketing (estrategia interna, no versionar)
+marketing/
+
+# binarios locales
 *.apk
 *.bat

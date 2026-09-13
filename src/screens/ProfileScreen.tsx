@@ -163,12 +163,12 @@ export function ProfileScreen({ navigation }: Props) {
         style={styles.ajuda}
         onPress={() => {
           Alert.alert(
-            'Registro de franquicias',
-            'Para publicar una franquicia tu rol debe ser "Franquiciador". Cambia el rol aquí y guarda.',
+            'Registro de oportunidades',
+            'Para publicar una franquicia, sociedad, proyecto o MIPE tu rol debe ser "Franquiciador". Cambia el rol aquí y guarda.',
           );
         }}
       >
-        <Text style={styles.ajudaText}>¿Cómo registro una franquicia?</Text>
+        <Text style={styles.ajudaText}>¿Cómo registro una oportunidad?</Text>
       </Pressable>
     </View>
   );

@@ -7,9 +7,9 @@ describe('Seed (RF-24)', () => {
     await createTestDb();
   });
 
-  it('inserta exactamente 20 franquicias de ejemplo', async () => {
+  it('inserta exactamente 28 oportunidades de ejemplo (20 franquicias)', async () => {
     const franchises = await FranchiseRepository.findAll({ sortBy: 'recent' });
-    expect(franchises.length).toBe(20);
+    expect(franchises.length).toBe(27); // activos: el proyecto vencido se excluye (RF-34)
   });
 
   it('cubre las 8 industrias y los 9 departamentos de Bolivia', async () => {
@@ -26,9 +26,9 @@ describe('Seed (RF-24)', () => {
 
   it('destaca 2 franquicias y el orden "recientes" es distinguible', async () => {
     const recent = await FranchiseRepository.findAll({ sortBy: 'recent' });
-    const featured = recent.filter((f) => f.featured).length;
-    expect(featured).toBeGreaterThanOrEqual(1);
-    expect(featured).toBeLessThanOrEqual(2);
+    const featuredFranchises = recent.filter((f) => f.featured && f.segment === 'franquicia').length;
+    expect(featuredFranchises).toBeGreaterThanOrEqual(1);
+    expect(featuredFranchises).toBeLessThanOrEqual(2);
 
     const dates = recent.map((f) => f.createdAt);
     for (let i = 1; i < dates.length; i += 1) {
