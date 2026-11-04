@@ -61,6 +61,17 @@ export const profileSchema = z.object({
   role: z.enum(['inversionista', 'franquiciador']),
 });
 
+export const registrationSchema = z.object({
+  fullName: z.string().min(3, 'Ingresá tu nombre completo'),
+  username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres'),
+  email: z.string().email('Correo electrónico no válido'),
+  phone: z.string().min(6, 'Ingresá un número de celular válido'),
+  acceptedTerms: z.boolean().refine((value) => value === true, {
+    message: 'Debés aceptar los Términos y Condiciones',
+  }),
+});
+
 export type ContactMessageFormValues = z.infer<typeof contactMessageSchema>;
 export type CreateFranchiseFormValues = z.infer<typeof createFranchiseSchema>;
 export type ProfileFormValues = z.infer<typeof profileSchema>;
+export type RegistrationFormValues = z.infer<typeof registrationSchema>;

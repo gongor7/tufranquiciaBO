@@ -4,14 +4,13 @@ import { StatusBar } from 'expo-status-bar';
 import { initDatabase } from './src/database/db';
 import { useOnboardingStore } from './src/stores/useOnboardingStore';
 import { useUserStore } from './src/stores/useUserStore';
-import { useMessageStore } from './src/stores/useMessageStore';
+import { useTicketStore } from './src/stores/useTicketStore';
 import { useFranchiseStore } from './src/stores/useFranchiseStore';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { LoadingScreen } from './src/components/ui/Screen';
 
 export default function App() {
   const [booted, setBooted] = useState(false);
-  const isCompleted = useOnboardingStore((s) => s.isCompleted);
   const onboardingLoading = useOnboardingStore((s) => s.loading);
   const checkOnboarding = useOnboardingStore((s) => s.check);
 
@@ -22,7 +21,7 @@ export default function App() {
       await useFranchiseStore.getState().loadFavorites();
       await useFranchiseStore.getState().loadFeatured();
       await useFranchiseStore.getState().loadPopular();
-      await useMessageStore.getState().loadConversations();
+      await useTicketStore.getState().loadTickets();
       await checkOnboarding();
       setBooted(true);
     })();
@@ -35,7 +34,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
-      <RootNavigator initialIsOnboarded={isCompleted} />
+      <RootNavigator />
     </SafeAreaProvider>
   );
 }

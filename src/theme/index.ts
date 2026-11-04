@@ -1,9 +1,13 @@
+/**
+ * Identidad visual oficial (spec 003): paleta burdeos/vino extraída de la
+ * imagen de referencia del sponsor (2026-11-02) — logo sobre blanco.
+ */
 export const colors = {
-  primary: '#1B4965',
-  primaryLight: '#5FA8D3',
-  primaryDark: '#0B2545',
-  accent: '#D4A843',
-  accentLight: '#F2D06B',
+  primary: '#740C27',
+  primaryLight: '#B37988',
+  primaryDark: '#4D0314',
+  accent: '#9D5065',
+  accentLight: '#D3B0BA',
   white: '#FFFFFF',
   background: '#F8F9FA',
   surface: '#FFFFFF',

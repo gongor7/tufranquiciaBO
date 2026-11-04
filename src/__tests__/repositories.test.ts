@@ -1,7 +1,6 @@
 import { createTestDb } from '../test-utils';
 import { FranchiseRepository } from '../database/repositories/franchise.repository';
 import { FavoriteRepository } from '../database/repositories/favorite.repository';
-import { MessageRepository } from '../database/repositories/message.repository';
 import { UserRepository } from '../database/repositories/user.repository';
 
 describe('Repositorios (RF-4..RF-22)', () => {
@@ -96,69 +95,6 @@ describe('Repositorios (RF-4..RF-22)', () => {
       await FranchiseRepository.incrementViews(target.id);
       const after = await FranchiseRepository.findById(target.id);
       expect(after?.viewsCount).toBe(before + 1);
-    });
-  });
-
-  describe('mensajes y chat (RF-12, RF-20, RF-21, RF-22)', () => {
-    it('crea una conversación al enviar un formulario de contacto (RF-12, RF-20)', async () => {
-      const franchises = await FranchiseRepository.findAll({ sortBy: 'recent' });
-      const target = franchises[0];
-      await MessageRepository.createContactMessage({
-        franchiseId: target.id,
-        senderName: 'Ana',
-        senderEmail: 'ana@ejemplo.com',
-        message: 'Me interesa invertir.',
-      });
-
-      const conversations = await MessageRepository.listConversations();
-      expect(conversations).toHaveLength(1);
-      expect(conversations[0].franchiseId).toBe(target.id);
-      expect(conversations[0].lastMessage).toBe('Me interesa invertir.');
-    });
-
-    it('incrementa inquiries_count al contactar', async () => {
-      const franchises = await FranchiseRepository.findAll({ sortBy: 'recent' });
-      const target = franchises[0];
-      await MessageRepository.createContactMessage({
-        franchiseId: target.id,
-        senderName: 'Ana',
-        senderEmail: 'ana@ejemplo.com',
-        message: 'Hola',
-      });
-      const after = await FranchiseRepository.findById(target.id);
-      expect(after?.inquiriesCount).toBe(1);
-    });
-
-    it('marca como leídas las conversaciones al abrir el hilo (RF-21)', async () => {
-      const franchises = await FranchiseRepository.findAll({ sortBy: 'recent' });
-      const target = franchises[0];
-      await MessageRepository.createContactMessage({
-        franchiseId: target.id,
-        senderName: 'Ana',
-        senderEmail: 'ana@ejemplo.com',
-        message: 'Hola',
-      });
-
-      await MessageRepository.markAsRead(target.id);
-      const messages = await MessageRepository.listByFranchise(target.id);
-      expect(messages.every((m) => m.isRead)).toBe(true);
-      expect(await MessageRepository.countUnread()).toBe(0);
-    });
-
-    it('permite responder y mantiene el hilo único por franquicia (RF-22)', async () => {
-      const franchises = await FranchiseRepository.findAll({ sortBy: 'recent' });
-      const target = franchises[0];
-      await MessageRepository.createContactMessage({
-        franchiseId: target.id,
-        senderName: 'Ana',
-        senderEmail: 'ana@ejemplo.com',
-        message: 'Hola',
-      });
-      await MessageRepository.addReply(target.id, 'Inversionista', 'Hola, soy cliente.');
-
-      const messages = await MessageRepository.listByFranchise(target.id);
-      expect(messages).toHaveLength(2);
-      expect(messages[1].message).toBe('Hola, soy cliente.');
     });
   });
 

@@ -6,15 +6,13 @@ export type RootStackParamList = {
   Onboarding: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   FranchiseDetail: { franchiseId: number };
-  Register: undefined;
-  Chat: { franchiseId: number };
   Favorites: undefined;
 };
 
 export type MainTabParamList = {
   Home: undefined;
   Explore: undefined;
-  Messages: undefined;
+  Tickets: undefined;
   Profile: undefined;
 };
 

@@ -22,7 +22,7 @@ spec, luego el código). Cada producto vive en `specs/NNN-<nombre>/` con
 | # | Producto | Alcance | Fase (reunión) | Dependencias |
 |---|---|---|---|---|
 | P1 | **Multisegmento local** (spec 002) | Los 4 segmentos de inversión en la app 100% local: franquicias (individual/departamental/nacional), sociedades SRL (capital social) y SA (acciones), sociedades accidentales (proyectos con vigencia), MIPEs/startups (perfil completo de incubación). Sin backend. | Fase 1 | — |
-| P2 | **Backend y cuentas** | API + base de datos remota, registro/login real de usuarios, sincronización entre dispositivos. | Fase 1–2 | P1 |
+| P2 | **Backend, panel admin y cuentas** (spec 004) | API + base de datos remota, cuentas reales (migración del registro local), sincronización de tickets, panel web del administrador (gestión de solicitudes, contenido público y almacenamiento privado de requisitos: SENAPI, documentación legal). | Fase 1–2 | P1, spec 003 |
 | P3 | **Monitoreo contable** | "Internal Platform": carga contable obligatoria de franquiciados/socios, cálculo de regalías y utilidades en tiempo real, panel para inversionistas. | Fase 2 | P2 |
 | P4 | **Mapa de Bolivia** | Mapa dinámico con pins por casa matriz y sucursales, densidad de mercado por departamento. | Fase 2 | P1 |
 | P5 | **Monetización** | Corretaje (3% del canon de entrada), fee de cierre por inyección de capital, 20% sobre asesorías del marketplace interno (contadores/abogados/economistas), membresía anual de visibilidad. | Fase 2 | P2 |

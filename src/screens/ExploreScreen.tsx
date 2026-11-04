@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { colors, spacing, radii, typography } from '../theme';
-import { departments, industries, getIndustry } from '../constants';
+import { colors, spacing, typography } from '../theme';
+import { departments } from '../constants';
 import { SEGMENTS } from '../constants/segments';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { FranchiseCard } from '../components/features/FranchiseCard';
@@ -17,8 +17,6 @@ type Navigation = TabScreenProps<'Explore'>['navigation'];
 const sortOptions: { label: string; value: SortBy }[] = [
   { label: 'Recientes', value: 'recent' },
   { label: 'Populares', value: 'popular' },
-  { label: 'Menor inversión', value: 'investment' },
-  { label: 'Mayor inversión', value: 'investmentDesc' },
 ];
 
 export function ExploreScreen() {
@@ -32,8 +30,6 @@ export function ExploreScreen() {
   const clearFilters = useFranchiseStore((s) => s.clearFilters);
 
   const [showFilters, setShowFilters] = useState(false);
-  const [minText, setMinText] = useState('');
-  const [maxText, setMaxText] = useState('');
 
   useEffect(() => {
     void loadFranchises();
@@ -41,11 +37,7 @@ export function ExploreScreen() {
   }, [loadFranchises, loadFavorites]);
 
   const activeFilters =
-    (filters.industry ? 1 : 0) +
-    (filters.department ? 1 : 0) +
-    (filters.minInvestment != null ? 1 : 0) +
-    (filters.maxInvestment != null ? 1 : 0) +
-    (filters.segments?.length ? 1 : 0);
+    (filters.department ? 1 : 0) + (filters.segments?.length ? 1 : 0);
 
   const openDetail = (franchise: Franchise) =>
     navigation.navigate('FranchiseDetail', { franchiseId: franchise.id });
@@ -58,26 +50,10 @@ export function ExploreScreen() {
     setFilters({ segments: next.length > 0 ? next : undefined });
   };
 
-  const toggleIndustry = (industry: string) => {
-    const next = filters.industry === industry ? undefined : industry;
-    setFilters({ industry: next });
-  };
-
   const toggleDepartment = (department: string) => {
     const next = filters.department === department ? undefined : department;
     setFilters({ department: next });
   };
-
-  const applyBudget = () => {
-    const minValue = Number(minText);
-    const maxValue = Number(maxText);
-    setFilters({
-      minInvestment: Number.isFinite(minValue) && minValue > 0 ? minValue : undefined,
-      maxInvestment: Number.isFinite(maxValue) && maxValue > 0 ? maxValue : undefined,
-    });
-  };
-
-  const displayData = useMemo(() => franchises, [franchises]);
 
   return (
     <View style={styles.container}>
@@ -108,7 +84,7 @@ export function ExploreScreen() {
             />
           ))}
           <Chip
-            label="Filtros"
+            label="Departamento"
             selected={showFilters}
             onPress={() => setShowFilters((v) => !v)}
           />
@@ -117,19 +93,6 @@ export function ExploreScreen() {
 
       {showFilters && (
         <View style={styles.filterPanel}>
-          <Text style={styles.filterLabel}>Categorías</Text>
-          <View style={styles.chipWrap}>
-            {industries.map((industry) => (
-              <Chip
-                key={industry.id}
-                label={industry.label}
-                emoji={getIndustry(industry.id)?.emoji}
-                selected={filters.industry === industry.id}
-                onPress={() => toggleIndustry(industry.id)}
-              />
-            ))}
-          </View>
-
           <Text style={styles.filterLabel}>Departamento</Text>
           <View style={styles.chipWrap}>
             {departments.map((department) => (
@@ -141,33 +104,11 @@ export function ExploreScreen() {
               />
             ))}
           </View>
-
-          <Text style={styles.filterLabel}>Rango de inversión (USD)</Text>
-          <View style={styles.budgetRow}>
-            <TextInput
-              style={styles.budgetInput}
-              placeholder="Mín"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="number-pad"
-              value={minText}
-              onChangeText={setMinText}
-            />
-            <Text style={styles.budgetDash}>—</Text>
-            <TextInput
-              style={styles.budgetInput}
-              placeholder="Máx"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="number-pad"
-              value={maxText}
-              onChangeText={setMaxText}
-            />
-            <Button title="Aplicar" size="sm" variant="outline" onPress={applyBudget} style={{ width: undefined }} />
-          </View>
         </View>
       )}
 
       <FlatList
-        data={displayData}
+        data={franchises}
         key="explore"
         numColumns={2}
         columnWrapperStyle={styles.gridRow}
@@ -180,12 +121,12 @@ export function ExploreScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>{showFilters || activeFilters > 0 ? '🔍' : '🏪'}</Text>
+            <Text style={styles.emptyEmoji}>{activeFilters > 0 ? '🔍' : '🏪'}</Text>
             <Text style={styles.emptyTitle}>No hay oportunidades para mostrar</Text>
             <Text style={styles.emptyText}>
               {activeFilters > 0
                 ? 'Prueba con otros filtros o limpia la búsqueda.'
-                : 'Aún no se han registrado franquicias.'}
+                : 'Aún no se han registrado oportunidades.'}
             </Text>
             {activeFilters > 0 && (
               <Button title="Limpiar filtros" variant="outline" onPress={clearFilters} />
@@ -219,31 +160,11 @@ const styles = StyleSheet.create({
   filterLabel: {
     ...typography.label,
     color: colors.text,
-    marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  },
-  budgetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  budgetInput: {
-    flex: 1,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 15,
-    color: colors.text,
-  },
-  budgetDash: {
-    marginHorizontal: spacing.sm,
-    color: colors.textSecondary,
   },
   gridRow: {
     gap: spacing.sm,

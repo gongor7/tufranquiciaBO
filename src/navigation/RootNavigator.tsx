@@ -4,20 +4,25 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors } from '../theme';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ExploreScreen } from '../screens/ExploreScreen';
-import { MessagesScreen } from '../screens/MessagesScreen';
+import { TicketsScreen } from '../screens/TicketsScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { FranchiseDetailScreen } from '../screens/FranchiseDetailScreen';
-import { RegisterScreen } from '../screens/RegisterScreen';
-import { ChatScreen } from '../screens/ChatScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { useUserStore } from '../stores/useUserStore';
+import { useOnboardingStore } from '../stores/useOnboardingStore';
+import { useTicketStore } from '../stores/useTicketStore';
 import type { MainTabParamList, RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs() {
+  const tickets = useTicketStore((s) => s.tickets);
+  const newCount = tickets.filter((t) => t.status === 'nuevo').length;
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -38,9 +43,13 @@ function MainTabs() {
         options={{ tabBarLabel: 'Explorar', tabBarIcon: () => <Text style={iconStyle}>🔎</Text> }}
       />
       <Tab.Screen
-        name="Messages"
-        component={MessagesScreen}
-        options={{ tabBarLabel: 'Mensajes', tabBarIcon: () => <Text style={iconStyle}>💬</Text> }}
+        name="Tickets"
+        component={TicketsScreen}
+        options={{
+          tabBarLabel: 'Solicitudes',
+          tabBarIcon: () => <Text style={iconStyle}>📩</Text>,
+          ...(newCount > 0 ? { tabBarBadge: newCount } : {}),
+        }}
       />
       <Tab.Screen
         name="Profile"
@@ -53,15 +62,22 @@ function MainTabs() {
 
 const iconStyle = { fontSize: 18 };
 
-interface RootNavigatorProps {
-  initialIsOnboarded: boolean;
-}
+/**
+ * Gate reactivo: sin registro no hay exploración (RF-37). Cuando el
+ * registro se completa, se monta la navegación principal.
+ */
+export function RootNavigator() {
+  const registered = useUserStore((s) => s.registered);
+  const isCompleted = useOnboardingStore((s) => s.isCompleted);
 
-export function RootNavigator({ initialIsOnboarded }: RootNavigatorProps) {
+  if (!registered) {
+    return <WelcomeScreen />;
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={initialIsOnboarded ? 'MainTabs' : 'Onboarding'}
+        initialRouteName={isCompleted ? 'MainTabs' : 'Onboarding'}
         screenOptions={{
           headerStyle: { backgroundColor: colors.primary },
           headerTintColor: colors.white,
@@ -75,8 +91,6 @@ export function RootNavigator({ initialIsOnboarded }: RootNavigatorProps) {
           component={FranchiseDetailScreen}
           options={{ title: 'Detalle' }}
         />
-        <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Nueva franquicia' }} />
-        <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Conversación' }} />
         <Stack.Screen name="Favorites" component={FavoritesScreen} options={{ title: 'Favoritos' }} />
       </Stack.Navigator>
     </NavigationContainer>

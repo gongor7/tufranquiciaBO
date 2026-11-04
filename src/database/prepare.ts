@@ -3,8 +3,9 @@ import { buildSeedRows, MILESTONES_INSERT_SQL } from './seed';
 import type { SqlExecutor } from './executor';
 
 const DROP_TABLES_SQL = `
-DROP TABLE IF EXISTS milestones;
+DROP TABLE IF EXISTS tickets;
 DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS milestones;
 DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS onboarding_completed;
 DROP TABLE IF EXISTS franchises;

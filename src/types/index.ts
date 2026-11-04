@@ -21,8 +21,34 @@ export interface User {
   email: string | null;
   phone: string | null;
   role: Role;
+  fullName: string | null;
+  username: string | null;
+  acceptedTerms: boolean;
+  registered: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RegistrationDTO {
+  fullName: string;
+  username: string;
+  email: string;
+  phone: string;
+  acceptedTerms: boolean;
+}
+
+export type TicketStatus = 'nuevo' | 'atendido';
+
+export interface Ticket {
+  id: number;
+  franchiseId: number;
+  franchiseName: string;
+  logoEmoji: string;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  status: TicketStatus;
+  createdAt: string;
 }
 
 export interface Franchise {

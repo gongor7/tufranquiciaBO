@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS users (
@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL DEFAULT 'inversionista'
     CHECK(role IN ('inversionista', 'franquiciador')),
   avatar_url TEXT,
+  full_name TEXT,
+  username TEXT,
+  accepted_terms INTEGER NOT NULL DEFAULT 0,
+  registered INTEGER NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT (datetime('now')),
   updated_at DATETIME NOT NULL DEFAULT (datetime('now'))
 );
@@ -74,14 +78,14 @@ CREATE TABLE IF NOT EXISTS milestones (
   FOREIGN KEY (franchise_id) REFERENCES franchises(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS messages (
+CREATE TABLE IF NOT EXISTS tickets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   franchise_id INTEGER NOT NULL,
-  sender_name TEXT NOT NULL,
-  sender_email TEXT,
-  sender_phone TEXT,
-  message TEXT NOT NULL,
-  is_read INTEGER DEFAULT 0,
+  full_name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  status TEXT NOT NULL DEFAULT 'nuevo'
+    CHECK(status IN ('nuevo', 'atendido')),
   created_at DATETIME NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (franchise_id) REFERENCES franchises(id) ON DELETE CASCADE
 );
@@ -108,11 +112,11 @@ CREATE INDEX IF NOT EXISTS idx_franchises_featured ON franchises(featured);
 CREATE INDEX IF NOT EXISTS idx_franchises_segment ON franchises(segment);
 CREATE INDEX IF NOT EXISTS idx_franchises_mipe_stage ON franchises(mipe_stage);
 CREATE INDEX IF NOT EXISTS idx_milestones_franchise ON milestones(franchise_id);
-CREATE INDEX IF NOT EXISTS idx_messages_franchise ON messages(franchise_id);
-CREATE INDEX IF NOT EXISTS idx_messages_read ON messages(is_read);
+CREATE INDEX IF NOT EXISTS idx_tickets_franchise ON tickets(franchise_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
 `;
 
 export const COUNT_FRANCHISES_SQL = 'SELECT COUNT(*) AS total FROM franchises;';
 export const COUNT_USERS_SQL = 'SELECT COUNT(*) AS total FROM users;';
 export const COUNT_FAVORITES_SQL = 'SELECT COUNT(*) AS total FROM favorites;';
-export const COUNT_MESSAGES_SQL = 'SELECT COUNT(*) AS total FROM messages;';
+export const COUNT_TICKETS_SQL = 'SELECT COUNT(*) AS total FROM tickets;';

@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radii, typography } from '../theme';
-import { industries } from '../constants';
 import { SEGMENTS } from '../constants/segments';
 import { getFranchiseImage } from '../constants/images';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
@@ -33,11 +32,6 @@ export function HomeScreen() {
     navigation.navigate('FranchiseDetail', { franchiseId: franchise.id });
 
   const openExplore = () => navigation.navigate('Explore');
-
-  const openIndustry = (industry: string) => {
-    useFranchiseStore.setState((s) => ({ filters: { ...s.filters, industry, text: undefined } }));
-    navigation.navigate('Explore');
-  };
 
   const openSegment = (segment: SegmentId) => {
     useFranchiseStore.setState((s) => ({
@@ -112,34 +106,6 @@ export function HomeScreen() {
               </View>
               <Text style={styles.categoryLabel} numberOfLines={2}>
                 {segment.label}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.subtitle}>Explora por categoría</Text>
-          <Pressable onPress={openExplore}>
-            <Text style={styles.seeAll}>Ver todas</Text>
-          </Pressable>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginHorizontal: -spacing.md }}
-          contentContainerStyle={styles.categories}
-        >
-          {industries.map((industry) => (
-            <Pressable
-              key={industry.id}
-              style={({ pressed }) => [styles.categoryTile, pressed && styles.pressedTile]}
-              onPress={() => openIndustry(industry.id)}
-            >
-              <View style={styles.categoryEmoji}>
-                <Text style={styles.categoryEmojiText}>{industry.emoji}</Text>
-              </View>
-              <Text style={styles.categoryLabel} numberOfLines={2}>
-                {industry.label}
               </Text>
             </Pressable>
           ))}
@@ -251,7 +217,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(11,37,69,0.62)',
+    backgroundColor: 'rgba(77,3,20,0.62)',
   },
   bannerContent: {
     padding: spacing.lg,
@@ -261,7 +227,7 @@ const styles = StyleSheet.create({
   },
   bannerTag: {
     color: colors.accent,
-    backgroundColor: 'rgba(11,37,69,0.55)',
+    backgroundColor: 'rgba(77,3,20,0.55)',
     fontWeight: '800',
     fontSize: 11,
     paddingHorizontal: spacing.sm,
@@ -277,7 +243,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   bannerSub: {
-    color: '#DDE7F0',
+    color: '#EBDDE1',
     fontSize: 14,
     marginTop: 4,
   },

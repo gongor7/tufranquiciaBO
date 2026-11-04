@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { UserRepository } from '../database/repositories/user.repository';
-import type { ProfileUpdateDTO, User } from '../types';
+import type { ProfileUpdateDTO, RegistrationDTO, User } from '../types';
 
 interface UserState {
   user: User | null;
   loading: boolean;
+  registered: boolean;
   loadProfile: () => Promise<void>;
+  register: (dto: RegistrationDTO) => Promise<User>;
   updateProfile: (dto: ProfileUpdateDTO) => Promise<User>;
   isFranquiciador: () => Promise<boolean>;
 }
@@ -13,14 +15,21 @@ interface UserState {
 export const useUserStore = create<UserState>((set, get) => ({
   user: null,
   loading: true,
+  registered: false,
 
   loadProfile: async () => {
     try {
       const user = await UserRepository.getProfile();
-      set({ user });
+      set({ user, registered: user?.registered === true });
     } finally {
       set({ loading: false });
     }
+  },
+
+  register: async (dto) => {
+    const updated = await UserRepository.register(dto);
+    set({ user: updated, registered: true });
+    return updated;
   },
 
   updateProfile: async (dto) => {

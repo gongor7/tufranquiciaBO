@@ -31,6 +31,19 @@ export const franchiseImages: Record<string, string> = {
 /** Imagen por defecto mientras no haya una específica. */
 export const defaultFranchiseImage = `${BASE}1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80`;
 
+/** Galería complementaria para el carrusel del detalle (RF-48). */
+const galleryExtras = [
+  `${BASE}1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80`,
+  `${BASE}1556761175-5973dc0f32e7?auto=format&fit=crop&w=900&q=80`,
+];
+
 export function getFranchiseImage(slug: string): string {
   return franchiseImages[slug] ?? defaultFranchiseImage;
 }
+
+/** 3 imágenes por oportunidad (principal + complementarias, sin duplicar). */
+export function getFranchiseGallery(slug: string): string[] {
+  const primary = getFranchiseImage(slug);
+  return [primary, ...galleryExtras.filter((img) => img !== primary)];
+}
+

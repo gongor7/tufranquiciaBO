@@ -1,44 +1,37 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
-  Image,
   Linking,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { colors, spacing, radii, typography } from '../theme';
 import { getIndustryLabel } from '../constants';
 import { MIPE_STAGE_LABELS, SEGMENT_LABELS, SUBTYPE_LABELS } from '../constants/segments';
-import { getFranchiseImage } from '../constants/images';
+import { getFranchiseGallery } from '../constants/images';
 import { FranchiseRepository } from '../database/repositories/franchise.repository';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
-import { useMessageStore } from '../stores/useMessageStore';
+import { useTicketStore } from '../stores/useTicketStore';
 import { Button } from '../components/ui/Button';
-import { FormField } from '../components/ui/FormField';
+import { MediaCarousel } from '../components/features/MediaCarousel';
 import { formatInvestmentRange, formatRoyalty } from '../utils/formatters';
-import { contactMessageSchema, ContactMessageFormValues } from '../utils/validators';
+import { openWhatsApp } from '../utils/links';
 import type { StackScreenProps } from '../navigation/types';
-import type { Franchise, Milestone } from '../types';
+import type { Franchise } from '../types';
 
 type Props = StackScreenProps<'FranchiseDetail'>;
 
 export function FranchiseDetailScreen({ route, navigation }: Props) {
   const { franchiseId } = route.params;
   const [franchise, setFranchise] = useState<Franchise | null>(null);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [contactOpen, setContactOpen] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [requesting, setRequesting] = useState(false);
   const favorites = useFranchiseStore((s) => s.favorites);
   const toggleFavorite = useFranchiseStore((s) => s.toggleFavorite);
   const incrementViews = useFranchiseStore((s) => s.incrementViews);
-  const sendContactMessage = useMessageStore((s) => s.sendContactMessage);
-  const loadConversations = useMessageStore((s) => s.loadConversations);
+  const createTicket = useTicketStore((s) => s.createTicket);
 
   useEffect(() => {
     void load();
@@ -49,11 +42,6 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
   const load = useCallback(async () => {
     const data = await FranchiseRepository.findById(franchiseId);
     setFranchise(data);
-    if (data?.segment === 'mipe') {
-      setMilestones(await FranchiseRepository.getMilestones(franchiseId));
-    } else {
-      setMilestones([]);
-    }
   }, [franchiseId]);
 
   useEffect(() => {
@@ -63,40 +51,48 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
   if (franchise == null) {
     return (
       <View style={styles.container}>
-        <Text style={styles.muted}>Cargando franquicia...</Text>
+        <Text style={styles.muted}>Cargando oportunidad...</Text>
       </View>
     );
   }
 
   const isFavorite = favorites.includes(franchise.id);
+  const gallery = getFranchiseGallery(franchise.slug);
 
   const onFavorite = () => {
     void toggleFavorite(franchise.id);
   };
 
-  const onWhatsapp = () => {
-    if (franchise.whatsapp == null) return;
-    const digits = franchise.whatsapp.replace(/\D/g, '');
-    void Linking.openURL(
-      `https://wa.me/${digits}?text=${encodeURIComponent(
-        `Hola, me interesa la franquicia de ${franchise.name} que vi en TuFranquiciaBO.`,
-      )}`,
+  const onWhatsApp = () => {
+    openWhatsApp(
+      franchise.whatsapp ?? franchise.contactPhone,
+      `Hola, me interesa la oportunidad de ${franchise.name} que vi en la plataforma.`,
     );
   };
 
-  const onSent = (message: string) => {
-    setContactOpen(false);
-    setSent(true);
-    void loadConversations();
-    Alert.alert('Consulta enviada', message);
+  const onRequestInfo = async () => {
+    setRequesting(true);
+    try {
+      await createTicket(franchise.id);
+      Alert.alert(
+        'Solicitud enviada',
+        `Tu solicitud sobre ${franchise.name} fue registrada. El equipo la atenderá y podrás verla en la pestaña Solicitudes.`,
+      );
+    } catch {
+      Alert.alert('Error', 'No pudimos registrar tu solicitud. Intentá nuevamente.');
+    } finally {
+      setRequesting(false);
+    }
   };
+
+  const isProjectExpired =
+    franchise.projectEnd != null && franchise.projectEnd < new Date().toISOString().slice(0, 10);
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xxl }} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <Image source={{ uri: getFranchiseImage(franchise.slug) }} style={StyleSheet.absoluteFill} />
-          <View style={styles.heroOverlay} />
+          <MediaCarousel images={gallery} logoEmoji={franchise.logoEmoji} />
           <View style={styles.heroActions}>
             <Pressable style={styles.circleButton} onPress={() => navigation.goBack()}>
               <Text style={styles.circleButtonText}>←</Text>
@@ -107,7 +103,7 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
           </View>
           {franchise.featured && (
             <View style={styles.heroFooter}>
-              <Text style={styles.featuredTag}>★ Franquicia destacada</Text>
+              <Text style={styles.featuredTag}>★ Oportunidad destacada</Text>
               <Text style={styles.heroViews}>👁 {franchise.viewsCount} consultas</Text>
             </View>
           )}
@@ -115,9 +111,6 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
 
         <View style={styles.content}>
           <View style={styles.titleRow}>
-            <View style={styles.logoBox}>
-              <Text style={styles.logo}>{franchise.logoEmoji}</Text>
-            </View>
             <View style={styles.titleInfo}>
               <Text style={styles.name}>{franchise.name}</Text>
               {franchise.tagline != null && (
@@ -130,7 +123,9 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
             <View style={[styles.chip, styles.chipSupport]}>
               <Text style={[styles.chipText, styles.chipSupportText]}>
                 {SEGMENT_LABELS[franchise.segment]}
-                {franchise.subtype != null ? ` · ${SUBTYPE_LABELS[franchise.subtype] ?? franchise.subtype}` : ''}
+                {franchise.subtype != null && franchise.segment === 'franquicia'
+                  ? ` · ${SUBTYPE_LABELS[franchise.subtype] ?? franchise.subtype}`
+                  : ''}
               </Text>
             </View>
             <View style={styles.chip}>
@@ -147,7 +142,7 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
             {franchise.segment === 'proyecto' && franchise.projectEnd != null && (
               <View style={styles.chip}>
                 <Text style={styles.chipText}>
-                  {isProjectExpired(franchise.projectEnd) ? '⏹ Proyecto cerrado' : '✅ Proyecto vigente'}
+                  {isProjectExpired ? '⏹ Proyecto cerrado' : '✅ Proyecto vigente'}
                 </Text>
               </View>
             )}
@@ -155,32 +150,55 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
 
           <View style={styles.investmentBanner}>
             <Text style={styles.investmentLabel}>
-              {franchise.segment === 'franquicia' ? 'INVERSIÓN INICIAL ESTIMADA' : 'MONTO DE PARTICIPACIÓN'}
+              {franchise.segment === 'franquicia'
+                ? 'INVERSIÓN INICIAL ESTIMADA'
+                : 'MONTO DE PARTICIPACIÓN'}
             </Text>
             <Text style={styles.investment}>
               {franchise.soughtAmount != null
-                ? `${franchise.soughtAmount === 0 ? 'A convenir' : formatMoney(franchise.soughtAmount, franchise.currency)}`
+                ? franchise.soughtAmount === 0
+                  ? 'A convenir'
+                  : formatMoney(franchise.soughtAmount, franchise.currency)
                 : formatInvestmentRange(franchise.minInvestment, franchise.maxInvestment, franchise.currency)}
             </Text>
           </View>
 
           {franchise.segment === 'franquicia' && (
-            <View style={styles.stats}>
-              <Stat icon="📈" label="ROI estimado" value={franchise.estimatedRoi ?? '—'} />
-              <Stat
-                icon="💳"
-                label="Royalty"
-                value={formatRoyalty(franchise.royaltyPercentage, franchise.royaltyType)}
-              />
-              <Stat icon="👥" label="Empleados" value={`${franchise.employeesRequired}`} />
-              <Stat icon="🎓" label="Capacitación" value={`${franchise.trainingWeeks} semanas`} />
-            </View>
+            <>
+              <Text style={styles.sectionTitle}>Requisitos clave</Text>
+              <View style={styles.contactCard}>
+                <DetailRow
+                  icon="💳"
+                  label="Royalty"
+                  value={formatRoyalty(franchise.royaltyPercentage, franchise.royaltyType)}
+                />
+                <DetailRow
+                  icon="🎓"
+                  label="Capacitación obligatoria"
+                  value={`${franchise.trainingWeeks} semanas`}
+                />
+                {franchise.subtype != null && (
+                  <DetailRow
+                    icon="🗺️"
+                    label="Alcance"
+                    value={SUBTYPE_LABELS[franchise.subtype] ?? franchise.subtype}
+                  />
+                )}
+              </View>
+              {franchise.estimatedRoi != null && (
+                <View style={styles.stats}>
+                  <Stat icon="📈" label="ROI estimado" value={franchise.estimatedRoi} />
+                </View>
+              )}
+            </>
           )}
 
-          {franchise.segment === 'sociedad' && franchise.availablePercentage != null && (
+          {franchise.segment === 'sociedad' && (
             <View style={styles.stats}>
               <Stat icon="🏛️" label="Tipo" value={SUBTYPE_LABELS[franchise.subtype ?? ''] ?? '—'} />
-              <Stat icon="🧩" label="Participación disponible" value={`${franchise.availablePercentage}%`} />
+              {franchise.availablePercentage != null && (
+                <Stat icon="🧩" label="Participación disponible" value={`${franchise.availablePercentage}%`} />
+              )}
             </View>
           )}
 
@@ -191,50 +209,26 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
             </View>
           )}
 
-          {franchise.segment === 'mipe' && (
+          {franchise.segment === 'mipe' && franchise.pitch != null && (
             <>
-              {franchise.pitch != null && (
-                <>
-                  <Text style={styles.sectionTitle}>Pitch del emprendimiento</Text>
-                  <Text style={styles.description}>{franchise.pitch}</Text>
-                </>
-              )}
-              {franchise.videoUrl != null && franchise.videoUrl.length > 0 && (
-                <Button
-                  title="▶ Ver video del pitch"
-                  variant="outline"
-                  style={{ marginTop: spacing.md, width: undefined }}
-                  onPress={() => void Linking.openURL(franchise.videoUrl as string)}
-                />
-              )}
-              {milestones.length > 0 && (
-                <>
-                  <Text style={styles.sectionTitle}>Hitos de incubación</Text>
-                  <View style={styles.contactCard}>
-                    {milestones.map((milestone) => (
-                      <DetailRow
-                        key={milestone.id}
-                        icon={milestone.completed ? '✅' : '⬜'}
-                        label={`Hito ${milestone.position + 1}`}
-                        value={milestone.title}
-                      />
-                    ))}
-                  </View>
-                </>
-              )}
-              {franchise.formalizationPlan != null && (
-                <>
-                  <Text style={styles.sectionTitle}>Plan de formalización</Text>
-                  <Text style={styles.description}>{franchise.formalizationPlan}</Text>
-                </>
-              )}
+              <Text style={styles.sectionTitle}>Pitch del emprendimiento</Text>
+              <Text style={styles.description}>{franchise.pitch}</Text>
             </>
           )}
 
-          <Text style={styles.sectionTitle}>Sobre la franquicia</Text>
+          <Text style={styles.sectionTitle}>Sobre la oportunidad</Text>
           <Text style={styles.description}>{franchise.description}</Text>
 
-          <Text style={styles.sectionTitle}>Contacto del franquiciador</Text>
+          {franchise.videoUrl != null && franchise.videoUrl.length > 0 && (
+            <Button
+              title="▶ Ver video del pitch"
+              variant="outline"
+              style={{ marginTop: spacing.md, width: undefined }}
+              onPress={() => void Linking.openURL(franchise.videoUrl as string)}
+            />
+          )}
+
+          <Text style={styles.sectionTitle}>Contacto</Text>
           <View style={styles.contactCard}>
             <DetailRow icon="👤" label="Responsable" value={franchise.contactName} />
             <DetailRow icon="✉️" label="Email" value={franchise.contactEmail} />
@@ -249,37 +243,13 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
       </ScrollView>
 
       <View style={styles.footer}>
+        <Button title="💬 Conversar" variant="outline" onPress={onWhatsApp} />
         <Button
-          title="💬 Conversar"
-          variant="outline"
-          onPress={() => navigation.navigate('Chat', { franchiseId: franchise.id })}
-        />
-        <Button
-          title="Solicitar información"
-          onPress={() => setContactOpen(true)}
+          title={requesting ? 'Enviando...' : 'Solicitar información'}
+          disabled={requesting}
+          onPress={() => void onRequestInfo()}
         />
       </View>
-
-      {franchise.whatsapp != null && (
-        <Pressable style={styles.whatsappFab} onPress={onWhatsapp}>
-          <Text style={styles.whatsappFabText}>WhatsApp</Text>
-        </Pressable>
-      )}
-
-      <ContactModal
-        visible={contactOpen}
-        franchiseName={franchise.name}
-        onClose={() => {
-          setContactOpen(false);
-          setSent(false);
-        }}
-        onSubmit={async (values) => {
-          await sendContactMessage({ ...values, franchiseId: franchise.id });
-          onSent('El franquiciador te responderá en la conversación.');
-        }}
-        sent={sent}
-        setSent={setSent}
-      />
     </View>
   );
 }
@@ -304,155 +274,9 @@ function DetailRow({ icon, label, value }: { icon: string; label: string; value:
   );
 }
 
-function isProjectExpired(projectEnd: string): boolean {
-  return projectEnd < new Date().toISOString().slice(0, 10);
-}
-
 function formatMoney(amount: number, currency: string): string {
   const symbol = currency === 'USD' ? 'US$ ' : `${currency} `;
   return `${symbol}${amount.toLocaleString('es-BO')}`;
-}
-
-interface ContactModalProps {
-  visible: boolean;
-  franchiseName: string;
-  sent: boolean;
-  onClose: () => void;
-  onSubmit: (values: ContactMessageFormValues) => Promise<void>;
-  setSent: (value: boolean) => void;
-}
-
-function ContactModal({ visible, franchiseName, sent, onClose, onSubmit, setSent }: ContactModalProps) {
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<ContactMessageFormValues>({
-    resolver: zodResolver(contactMessageSchema),
-    defaultValues: {
-      senderName: '',
-      senderEmail: '',
-      senderPhone: '',
-      message: '',
-    },
-  });
-
-  const submit = handleSubmit(async (values) => {
-    await onSubmit(values);
-    reset();
-  });
-
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Contactar a {franchiseName}</Text>
-          <Text style={styles.modalSubtitle}>
-            Completa el formulario y el franquiciador te responderá en la conversación.
-          </Text>
-
-          {sent ? (
-            <View style={{ alignItems: 'center', paddingVertical: spacing.lg }}>
-              <Text style={{ fontSize: 48 }}>✅</Text>
-              <Text style={styles.modalSubtitle}>Consulta enviada con éxito.</Text>
-            </View>
-          ) : (
-            <>
-              <Controller
-                control={control}
-                name="senderName"
-                render={({ field }) => (
-                  <FormField
-                    label="Nombre *"
-                    placeholder="Tu nombre"
-                    error={errors.senderName?.message}
-                    value={field.value}
-                    onChangeText={field.onChange}
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name="senderEmail"
-                render={({ field }) => (
-                  <FormField
-                    label="Email *"
-                    placeholder="tucorreo@ejemplo.com"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    error={errors.senderEmail?.message}
-                    value={field.value}
-                    onChangeText={field.onChange}
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name="senderPhone"
-                render={({ field }) => (
-                  <FormField
-                    label="Teléfono"
-                    placeholder="Opcional"
-                    keyboardType="phone-pad"
-                    error={errors.senderPhone?.message}
-                    value={field.value}
-                    onChangeText={field.onChange}
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name="message"
-                render={({ field }) => (
-                  <FormField
-                    label="Mensaje *"
-                    placeholder="Hola, me interesa esta franquicia..."
-                    multiline
-                    numberOfLines={4}
-                    style={{ minHeight: 90, textAlignVertical: 'top' }}
-                    error={errors.message?.message}
-                    value={field.value}
-                    onChangeText={field.onChange}
-                  />
-                )}
-              />
-
-              <View style={styles.modalButtons}>
-                <Button
-                  title="Cancelar"
-                  variant="ghost"
-                  disabled={isSubmitting}
-                  onPress={() => {
-                    setSent(false);
-                    onClose();
-                    reset();
-                  }}
-                  style={{ width: undefined }}
-                />
-                <Button
-                  title={isSubmitting ? 'Enviando...' : 'Enviar'}
-                  disabled={isSubmitting}
-                  onPress={() => void submit()}
-                  style={{ width: undefined }}
-                />
-              </View>
-            </>
-          )}
-
-          {sent && (
-            <Button
-              title="Cerrar"
-              onPress={() => {
-                setSent(false);
-                onClose();
-              }}
-            />
-          )}
-        </View>
-      </View>
-    </Modal>
-  );
 }
 
 const styles = StyleSheet.create({
@@ -465,17 +289,8 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   hero: {
-    height: 230,
     position: 'relative',
     justifyContent: 'flex-end',
-  },
-  heroOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(11,37,69,0.45)',
   },
   heroActions: {
     position: 'absolute',
@@ -484,6 +299,7 @@ const styles = StyleSheet.create({
     right: spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    zIndex: 2,
   },
   circleButton: {
     width: 40,
@@ -507,6 +323,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   featuredTag: {
     backgroundColor: colors.accent,
@@ -522,6 +342,8 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 12,
     fontWeight: '600',
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowRadius: 4,
   },
   content: {
     paddingHorizontal: spacing.lg,
@@ -531,27 +353,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: radii.lg,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  logo: {
-    fontSize: 36,
-  },
   titleInfo: {
     flex: 1,
-    marginLeft: spacing.md,
   },
   name: {
     fontSize: 24,
@@ -583,11 +386,11 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   chipSupport: {
-    backgroundColor: 'rgba(212,168,67,0.15)',
+    backgroundColor: 'rgba(157,80,101,0.16)',
     borderColor: colors.accent,
   },
   chipSupportText: {
-    color: '#8A6D1F',
+    color: '#6E3145',
   },
   investmentBanner: {
     backgroundColor: colors.primary,
@@ -689,53 +492,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-  },
-  whatsappFab: {
-    position: 'absolute',
-    right: spacing.lg,
-    bottom: 90,
-    backgroundColor: '#25D366',
-    borderRadius: radii.full,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  whatsappFabText: {
-    color: colors.white,
-    fontWeight: '800',
-    fontSize: 14,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
   },
 });
