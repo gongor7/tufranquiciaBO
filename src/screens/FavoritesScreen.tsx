@@ -4,6 +4,7 @@ import { colors, spacing } from '../theme';
 import { FranchiseRepository } from '../database/repositories/franchise.repository';
 import { FavoriteRepository } from '../database/repositories/favorite.repository';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
+import { Icon } from '../components/ui/Icon';
 import { FranchiseCard } from '../components/features/FranchiseCard';
 import { Button } from '../components/ui/Button';
 import type { StackScreenProps } from '../navigation/types';
@@ -49,7 +50,7 @@ export function FavoritesScreen({ navigation }: Props) {
         ListEmptyComponent={
           loading ? null : (
             <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>🤍</Text>
+              <Icon name="heart-outline" size={48} color={colors.textLight} />
               <Text style={styles.emptyTitle}>Aún no tienes favoritos</Text>
               <Text style={styles.emptyText}>
                 Toca el corazón en cualquier franquicia para guardarla aquí y compararla luego.
@@ -79,9 +80,6 @@ const styles = StyleSheet.create({
   empty: {
     alignItems: 'center',
     paddingTop: spacing.xxl,
-  },
-  emptyEmoji: {
-    fontSize: 56,
   },
   emptyTitle: {
     fontSize: 18,

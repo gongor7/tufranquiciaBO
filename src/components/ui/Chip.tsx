@@ -1,14 +1,15 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { colors, spacing, radii } from '../../theme';
+import { Icon, IconName } from './Icon';
 
 interface ChipProps {
   label: string;
   selected?: boolean;
   onPress?: () => void;
-  emoji?: string;
+  icon?: IconName;
 }
 
-export function Chip({ label, selected = false, onPress, emoji }: ChipProps) {
+export function Chip({ label, selected = false, onPress, icon }: ChipProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -18,7 +19,9 @@ export function Chip({ label, selected = false, onPress, emoji }: ChipProps) {
         pressed && styles.pressed,
       ]}
     >
-      {emoji != null && <Text style={styles.emoji}>{emoji}</Text>}
+      {icon != null && (
+        <Icon name={icon} size={15} color={selected ? colors.white : colors.textSecondary} />
+      )}
       <Text style={[styles.label, selected && styles.labelSelected]}>{label}</Text>
     </Pressable>
   );
@@ -28,6 +31,7 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.xs + 1,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.full,
@@ -46,10 +50,6 @@ const styles = StyleSheet.create({
   },
   labelSelected: {
     color: colors.white,
-  },
-  emoji: {
-    marginRight: spacing.xs,
-    fontSize: 14,
   },
   pressed: {
     opacity: 0.8,

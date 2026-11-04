@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { colors, spacing, radii, typography } from '../../theme';
 import { FormField } from '../../components/ui/FormField';
 import { Button } from '../../components/ui/Button';
+import { Icon } from '../../components/ui/Icon';
 import { useUserStore } from '../../stores/useUserStore';
 import { registrationSchema, RegistrationFormValues } from '../../utils/validators';
 
@@ -48,14 +49,17 @@ export function WelcomeScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.hero}>
-        <Text style={styles.heroEmoji}>🏢</Text>
+        <View style={styles.heroIconBox}>
+          <Icon name="business" size={40} color={colors.primary} />
+        </View>
         <Text style={styles.heroTitle}>Bienvenido a TuFranquiciaBO</Text>
         <Text style={styles.heroSubtitle}>
           La plataforma que conecta inversionistas con oportunidades en Bolivia.
           Registrate para explorar franquicias, sociedades, proyectos y emprendimientos.
         </Text>
         <View style={styles.roleBadge}>
-          <Text style={styles.roleBadgeText}>👤 Modo Inversionista</Text>
+          <Icon name="person-outline" size={13} color={colors.primaryDark} />
+          <Text style={styles.roleBadgeText}>Modo Inversionista</Text>
         </View>
       </View>
 
@@ -123,7 +127,7 @@ export function WelcomeScreen() {
 
       <Pressable style={styles.termsRow} onPress={toggleTerms}>
         <View style={[styles.checkbox, accepted && styles.checkboxChecked]}>
-          {accepted && <Text style={styles.checkboxMark}>✓</Text>}
+          {accepted && <Icon name="checkmark" size={15} color={colors.white} />}
         </View>
         <Text style={styles.termsText}>
           Acepto los <Text style={styles.termsLink}>Términos y Condiciones</Text> y la política
@@ -153,8 +157,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xl,
   },
-  heroEmoji: {
-    fontSize: 64,
+  heroIconBox: {
+    width: 84,
+    height: 84,
+    borderRadius: 24,
+    backgroundColor: 'rgba(116,12,39,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroTitle: {
     ...typography.h1,
@@ -177,6 +186,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   roleBadgeText: {
     color: colors.primaryDark,
@@ -211,11 +223,6 @@ const styles = StyleSheet.create({
   },
   checkboxChecked: {
     backgroundColor: colors.primary,
-  },
-  checkboxMark: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '900',
   },
   termsText: {
     flex: 1,

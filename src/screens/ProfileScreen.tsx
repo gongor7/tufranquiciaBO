@@ -18,6 +18,7 @@ import { useTicketStore } from '../stores/useTicketStore';
 import { SUPPORT_WHATSAPP, SUPPORT_PUBLISH_MESSAGE } from '../constants/support';
 import { openWhatsApp } from '../utils/links';
 import { FormField } from '../components/ui/FormField';
+import { Icon } from '../components/ui/Icon';
 import { Button } from '../components/ui/Button';
 import type { TabScreenProps } from '../navigation/types';
 
@@ -90,7 +91,7 @@ export function ProfileScreen({ navigation }: Props) {
 
       <View style={styles.card}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>👤</Text>
+          <Icon name="person" size={28} color={colors.primary} />
         </View>
         <View style={styles.cardInfo}>
           <Text style={styles.cardName}>{user?.fullName ?? user?.name ?? 'Inversionista'}</Text>
@@ -107,7 +108,10 @@ export function ProfileScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('Favorites')}
         >
           <Text style={styles.statNumber}>{favorites.length}</Text>
-          <Text style={styles.statLabel}>❤️ Favoritos</Text>
+          <View style={styles.statLabelRow}>
+            <Icon name="heart-outline" size={14} color={colors.text} />
+            <Text style={styles.statLabel}>Favoritos</Text>
+          </View>
           <Text style={styles.statAction}>Ver</Text>
         </Pressable>
         <Pressable
@@ -115,7 +119,10 @@ export function ProfileScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('MainTabs', { screen: 'Tickets' })}
         >
           <Text style={styles.statNumber}>{tickets.length}</Text>
-          <Text style={styles.statLabel}>📩 Solicitudes</Text>
+          <View style={styles.statLabelRow}>
+            <Icon name="mail-outline" size={14} color={colors.text} />
+            <Text style={styles.statLabel}>Solicitudes</Text>
+          </View>
           <Text style={styles.statAction}>Ver</Text>
         </Pressable>
       </View>
@@ -166,7 +173,9 @@ export function ProfileScreen({ navigation }: Props) {
       <Button title="Guardar cambios" onPress={() => void save()} />
 
       <Pressable style={styles.publishCta} onPress={onPublish}>
-        <Text style={styles.publishEmoji}>📣</Text>
+        <View style={styles.publishIconBox}>
+          <Icon name="megaphone-outline" size={22} color={colors.primary} />
+        </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.publishTitle}>Quiero publicar mi negocio</Text>
           <Text style={styles.publishText}>
@@ -210,9 +219,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: 28,
-  },
+
   cardInfo: {
     flex: 1,
     marginLeft: spacing.md,
@@ -246,11 +253,16 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: colors.primary,
   },
+  statLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
   statLabel: {
     fontSize: 13,
     fontWeight: '700',
     color: colors.text,
-    marginTop: 2,
   },
   statAction: {
     fontSize: 12,
@@ -274,8 +286,13 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.md,
   },
-  publishEmoji: {
-    fontSize: 32,
+  publishIconBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   publishTitle: {
     fontSize: 15,

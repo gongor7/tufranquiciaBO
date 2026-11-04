@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radii } from '../theme';
 import { useTicketStore } from '../stores/useTicketStore';
 import { SectionTitle } from '../components/ui/SectionTitle';
+import { Icon } from '../components/ui/Icon';
 import { formatRelative } from '../utils/formatters';
 import type { Ticket } from '../types';
 import type { TabScreenProps } from '../navigation/types';
@@ -32,7 +33,9 @@ export function TicketsScreen() {
         contentContainerStyle={{ paddingBottom: spacing.xxl }}
         renderItem={({ item }) => (
           <Pressable style={styles.card} onPress={() => openDetail(item)}>
-            <Text style={styles.emoji}>{item.logoEmoji}</Text>
+            <View style={styles.emojiBox}>
+              <Icon name="business-outline" size={20} color={colors.primary} />
+            </View>
             <View style={styles.info}>
               <Text style={styles.name}>{item.franchiseName}</Text>
               <Text style={styles.meta}>
@@ -45,6 +48,11 @@ export function TicketsScreen() {
                 item.status === 'atendido' ? styles.statusDone : styles.statusNew,
               ]}
             >
+              <Icon
+                name={item.status === 'atendido' ? 'checkmark-circle' : 'time-outline'}
+                size={13}
+                color={item.status === 'atendido' ? colors.success : colors.primary}
+              />
               <Text
                 style={[
                   styles.statusText,
@@ -58,7 +66,7 @@ export function TicketsScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>📩</Text>
+            <Icon name="mail-open-outline" size={48} color={colors.textLight} />
             <Text style={styles.emptyTitle}>Todavía no tenés solicitudes</Text>
             <Text style={styles.emptyText}>
               Cuando pidas información de una oportunidad, la vas a ver aquí con su estado.
@@ -90,8 +98,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     gap: spacing.sm,
   },
-  emoji: {
-    fontSize: 28,
+  emojiBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(116,12,39,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   info: {
     flex: 1,
@@ -110,6 +123,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     paddingHorizontal: spacing.sm + 2,
     paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   statusText: {
     fontWeight: '700',
@@ -135,9 +151,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: spacing.xxl,
     paddingHorizontal: spacing.lg,
-  },
-  emptyEmoji: {
-    fontSize: 56,
   },
   emptyTitle: {
     fontSize: 18,

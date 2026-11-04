@@ -3,31 +3,32 @@ import { StatusBar } from 'expo-status-bar';
 import { Text, View } from 'react-native';
 import { colors } from '../theme';
 import { Button } from '../components/ui/Button';
+import { Icon, IconName } from '../components/ui/Icon';
 import { useOnboardingStore } from '../stores/useOnboardingStore';
 import type { StackScreenProps } from '../navigation/types';
 
 type Props = StackScreenProps<'Onboarding'>;
 
-const slides = [
+const slides: { icon: IconName; title: string; text: string }[] = [
   {
-    emoji: '🏢',
+    icon: 'business',
     title: 'Bienvenido a TuFranquiciaBO',
-    text: 'La plataforma que conecta inversionistas con franquicias disponibles en Bolivia.',
+    text: 'La plataforma que conecta inversionistas con oportunidades de inversión en Bolivia: franquicias, sociedades, proyectos y emprendimientos.',
   },
   {
-    emoji: '🔍',
+    icon: 'search',
     title: 'Explora sin límites',
-    text: 'Busca por categoría, departamento y rango de inversión. Encuentra la oportunidad ideal para ti.',
+    text: 'Navega por vertical, departamento y búsqueda libre. Guarda tus oportunidades favoritas con un toque.',
   },
   {
-    emoji: '💬',
-    title: 'Contacta directo',
-    text: 'Envía consultas y conversa con cada franquiciador en un chat simple y organizado.',
+    icon: 'logo-whatsapp',
+    title: 'Contacto directo',
+    text: 'Solicita información con un solo toque y conversa por WhatsApp con el responsable de cada oportunidad.',
   },
   {
-    emoji: '🚀',
-    title: 'Publica tu franquicia',
-    text: 'Si eres franquiciador, registra tu negocio en 4 pasos y empieza a recibir consultas.',
+    icon: 'trending-up',
+    title: 'Invierte con criterio',
+    text: 'Compara inversión, royalty y requisitos clave de cada oportunidad para decidir con datos.',
   },
 ];
 
@@ -54,7 +55,19 @@ export function OnboardingScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <StatusBar style="dark" />
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 88 }}>{slides[index].emoji}</Text>
+        <View
+          style={{
+            width: 110,
+            height: 110,
+            borderRadius: 32,
+            backgroundColor: 'rgba(116,12,39,0.08)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 24,
+          }}
+        >
+          <Icon name={slides[index].icon} size={52} color={colors.primary} />
+        </View>
         <Text
           style={{
             fontSize: 28,

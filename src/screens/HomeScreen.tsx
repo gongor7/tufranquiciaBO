@@ -3,6 +3,8 @@ import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, radii, typography } from '../theme';
 import { SEGMENTS } from '../constants/segments';
+import { SEGMENT_ICONS } from '../constants/icons';
+import { Icon } from '../components/ui/Icon';
 import { getFranchiseImage } from '../constants/images';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { FranchiseCard } from '../components/features/FranchiseCard';
@@ -45,7 +47,7 @@ export function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Bienvenido 👋</Text>
+            <Text style={styles.greeting}>Bienvenido</Text>
             <Text style={styles.headerTitle}>Encuentra tu próxima inversión en Bolivia</Text>
           </View>
           <View style={styles.headerBadge}>
@@ -55,7 +57,7 @@ export function HomeScreen() {
         </View>
 
         <Pressable onPress={openExplore} style={styles.searchWrap}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Icon name="search-outline" size={17} color={colors.textSecondary} />
           <TextInput
             style={styles.search}
             placeholder="Buscar por nombre, ciudad o rubro..."
@@ -73,15 +75,19 @@ export function HomeScreen() {
             <View style={styles.bannerOverlay} />
             <View style={styles.bannerContent}>
               <View style={styles.bannerTags}>
-                <Text style={styles.bannerTag}>★ OPORTUNIDAD DESTACADA</Text>
+                <Icon name="star" size={11} color={colors.primaryDark} />
+                <Text style={styles.bannerTag}>OPORTUNIDAD DESTACADA</Text>
               </View>
               <Text style={styles.bannerName} numberOfLines={1}>
-                {hero.logoEmoji} {hero.name}
+                {hero.name}
               </Text>
               <Text style={styles.bannerSub} numberOfLines={2}>
                 {hero.tagline}
               </Text>
-              <Text style={styles.bannerCity}>📍 {hero.city}, {hero.department}</Text>
+              <View style={styles.bannerCityRow}>
+                <Icon name="location" size={12} color={colors.accentLight} />
+                <Text style={styles.bannerCity}>{hero.city}, {hero.department}</Text>
+              </View>
             </View>
           </Pressable>
         )}
@@ -102,7 +108,11 @@ export function HomeScreen() {
               onPress={() => openSegment(segment.id)}
             >
               <View style={styles.categoryEmoji}>
-                <Text style={styles.categoryEmojiText}>{segment.emoji}</Text>
+                <Icon
+                  name={SEGMENT_ICONS[segment.id]}
+                  size={26}
+                  color={colors.primary}
+                />
               </View>
               <Text style={styles.categoryLabel} numberOfLines={2}>
                 {segment.label}
@@ -194,15 +204,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: spacing.sm,
-  },
   search: {
     flex: 1,
     paddingVertical: spacing.sm + 4,
     fontSize: 15,
     color: colors.text,
+    marginLeft: spacing.sm,
   },
   banner: {
     height: 190,
@@ -247,11 +254,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
+  bannerCityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: spacing.sm,
+  },
   bannerCity: {
     color: colors.accentLight,
     fontSize: 12,
     fontWeight: '700',
-    marginTop: spacing.sm,
   },
   sectionHeader: {
     flexDirection: 'row',

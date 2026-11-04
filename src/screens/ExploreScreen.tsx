@@ -4,11 +4,13 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, typography } from '../theme';
 import { departments } from '../constants';
 import { SEGMENTS } from '../constants/segments';
+import { SEGMENT_ICONS } from '../constants/icons';
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { FranchiseCard } from '../components/features/FranchiseCard';
 import { Chip } from '../components/ui/Chip';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Button } from '../components/ui/Button';
+import { Icon } from '../components/ui/Icon';
 import type { TabScreenProps } from '../navigation/types';
 import type { Franchise, Segment as Segments, SortBy } from '../types';
 
@@ -65,7 +67,7 @@ export function ExploreScreen() {
             <Chip
               key={segment.id}
               label={segment.label}
-              emoji={segment.emoji}
+              icon={SEGMENT_ICONS[segment.id]}
               selected={(filters.segments ?? []).includes(segment.id)}
               onPress={() => toggleSegment(segment.id)}
             />
@@ -121,7 +123,11 @@ export function ExploreScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>{activeFilters > 0 ? '🔍' : '🏪'}</Text>
+            <Icon
+              name={activeFilters > 0 ? 'search-outline' : 'business-outline'}
+              size={48}
+              color={colors.textLight}
+            />
             <Text style={styles.emptyTitle}>No hay oportunidades para mostrar</Text>
             <Text style={styles.emptyText}>
               {activeFilters > 0

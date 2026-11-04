@@ -43,6 +43,11 @@
   no añadir dependencias sin justificar.
 - Video por Linking (ya usado para WhatsApp/MIPEs) → idem.
 
+## Dependencia añadida (justificación)
+- `@expo/vector-icons` (^15.0.2): iconografía vectorial Ionicons. Motivo:
+  pedido del sponsor (UI profesional sin emojis). Es el paquete oficial de
+  Expo, sin configuración nativa adicional y compatible con web/Android.
+
 ## Estrategia de tests
 - Esquema v3: reconstrucción desde v2, tablas tickets presente, messages
   ausente, usuarios con campos nuevos.

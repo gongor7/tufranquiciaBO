@@ -36,6 +36,14 @@
       verde, demo manual completa, versión 1.2.0 (versionCode 3). Hecho
       cuando: checklist documentado y matriz RF→test completa. ✓
 
+- [x] T34. Iconografía profesional: reemplazo total de emojis de UI por
+      iconos vectoriales (Ionicons vía @expo/vector-icons, dependencia
+      justificada: pedido explícito del sponsor de look profesional;
+      paquete oficial de Expo con fuentes incluidas). Componente Icon,
+      mapas por industria/segmento, tabs, tarjetas, detalle, solicitudes,
+      perfil, registro y onboarding. Hecho cuando: sin emojis en UI,
+      tsc/eslint/jest en verde y verificación visual en dev.
+
 ## Matriz RF → tarea → test
 
 | RF | Tarea | Test |

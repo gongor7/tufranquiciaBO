@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, StyleSheet, View } from 'react-native';
 import { colors } from '../../theme';
+import { Icon } from '../ui/Icon';
 
 interface MediaCarouselProps {
   images: string[];
@@ -37,7 +38,7 @@ export function MediaCarousel({ images, logoEmoji }: MediaCarouselProps) {
             <Image source={{ uri: item }} style={StyleSheet.absoluteFill} />
             <View style={styles.overlay} />
             <View style={styles.emojiBadge}>
-              <Text style={styles.emoji}>{logoEmoji}</Text>
+              <Icon name="business" size={24} color={colors.primary} />
             </View>
           </View>
         )}
@@ -75,8 +76,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 14,
     left: 14,
-    width: 54,
-    height: 54,
+    width: 50,
+    height: 50,
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.95)',
     alignItems: 'center',
@@ -86,9 +87,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 4,
-  },
-  emoji: {
-    fontSize: 28,
   },
   dots: {
     position: 'absolute',

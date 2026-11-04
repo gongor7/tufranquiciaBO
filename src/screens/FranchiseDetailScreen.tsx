@@ -16,6 +16,8 @@ import { FranchiseRepository } from '../database/repositories/franchise.reposito
 import { useFranchiseStore } from '../stores/useFranchiseStore';
 import { useTicketStore } from '../stores/useTicketStore';
 import { Button } from '../components/ui/Button';
+import { Icon, IconName } from '../components/ui/Icon';
+import { getIndustryIcon } from '../constants/icons';
 import { MediaCarousel } from '../components/features/MediaCarousel';
 import { formatInvestmentRange, formatRoyalty } from '../utils/formatters';
 import { openWhatsApp } from '../utils/links';
@@ -33,18 +35,21 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
   const incrementViews = useFranchiseStore((s) => s.incrementViews);
   const createTicket = useTicketStore((s) => s.createTicket);
 
-  useEffect(() => {
-    void load();
-    void incrementViews(franchiseId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [franchiseId]);
-
   const load = useCallback(async () => {
     const data = await FranchiseRepository.findById(franchiseId);
     setFranchise(data);
   }, [franchiseId]);
 
   useEffect(() => {
+    // Carga inicial del detalle (fetch-on-mount sobre SQLite local).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+    void incrementViews(franchiseId);
+  }, [load, incrementViews, franchiseId]);
+
+  useEffect(() => {
+    // Recarga cuando cambian favoritos para reflejar el corazón.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load, favorites.length]);
 
@@ -95,16 +100,26 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
           <MediaCarousel images={gallery} logoEmoji={franchise.logoEmoji} />
           <View style={styles.heroActions}>
             <Pressable style={styles.circleButton} onPress={() => navigation.goBack()}>
-              <Text style={styles.circleButtonText}>←</Text>
+              <Icon name="chevron-back" size={20} color={colors.primaryDark} />
             </Pressable>
             <Pressable style={styles.circleButton} onPress={onFavorite}>
-              <Text style={styles.circleButtonText}>{isFavorite ? '❤️' : '🤍'}</Text>
+              <Icon
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={19}
+                color={isFavorite ? colors.primary : colors.textSecondary}
+              />
             </Pressable>
           </View>
           {franchise.featured && (
             <View style={styles.heroFooter}>
-              <Text style={styles.featuredTag}>★ Oportunidad destacada</Text>
-              <Text style={styles.heroViews}>👁 {franchise.viewsCount} consultas</Text>
+              <View style={styles.featuredTagRow}>
+                <Icon name="star" size={11} color={colors.primaryDark} />
+                <Text style={styles.featuredTag}>Oportunidad destacada</Text>
+              </View>
+              <View style={styles.heroViewsRow}>
+                <Icon name="eye-outline" size={13} color={colors.white} />
+                <Text style={styles.heroViews}>{franchise.viewsCount} consultas</Text>
+              </View>
             </View>
           )}
         </View>
@@ -129,21 +144,37 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
               </Text>
             </View>
             <View style={styles.chip}>
-              <Text style={styles.chipText}>{franchise.industryEmoji} {getIndustryLabel(franchise.industry)}</Text>
+              <View style={styles.chipContent}>
+                <Icon name={getIndustryIcon(franchise.industry)} size={12} color={colors.textSecondary} />
+                <Text style={styles.chipText}>{getIndustryLabel(franchise.industry)}</Text>
+              </View>
             </View>
             <View style={styles.chip}>
-              <Text style={styles.chipText}>📍 {franchise.city}, {franchise.department}</Text>
+              <View style={styles.chipContent}>
+                <Icon name="location" size={12} color={colors.textSecondary} />
+                <Text style={styles.chipText}>{franchise.city}, {franchise.department}</Text>
+              </View>
             </View>
             {franchise.segment === 'mipe' && franchise.mipeStage != null && (
               <View style={styles.chip}>
-                <Text style={styles.chipText}>🌱 {MIPE_STAGE_LABELS[franchise.mipeStage]}</Text>
+                <View style={styles.chipContent}>
+                  <Icon name="trending-up-outline" size={12} color={colors.textSecondary} />
+                  <Text style={styles.chipText}>{MIPE_STAGE_LABELS[franchise.mipeStage]}</Text>
+                </View>
               </View>
             )}
             {franchise.segment === 'proyecto' && franchise.projectEnd != null && (
               <View style={styles.chip}>
-                <Text style={styles.chipText}>
-                  {isProjectExpired ? '⏹ Proyecto cerrado' : '✅ Proyecto vigente'}
-                </Text>
+                <View style={styles.chipContent}>
+                  <Icon
+                    name={isProjectExpired ? 'stop-circle-outline' : 'checkmark-circle-outline'}
+                    size={12}
+                    color={isProjectExpired ? colors.textSecondary : colors.success}
+                  />
+                  <Text style={styles.chipText}>
+                    {isProjectExpired ? 'Proyecto cerrado' : 'Proyecto vigente'}
+                  </Text>
+                </View>
               </View>
             )}
           </View>
@@ -168,18 +199,18 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
               <Text style={styles.sectionTitle}>Requisitos clave</Text>
               <View style={styles.contactCard}>
                 <DetailRow
-                  icon="💳"
+                  icon="card-outline"
                   label="Royalty"
                   value={formatRoyalty(franchise.royaltyPercentage, franchise.royaltyType)}
                 />
                 <DetailRow
-                  icon="🎓"
+                  icon="school-outline"
                   label="Capacitación obligatoria"
                   value={`${franchise.trainingWeeks} semanas`}
                 />
                 {franchise.subtype != null && (
                   <DetailRow
-                    icon="🗺️"
+                    icon="map-outline"
                     label="Alcance"
                     value={SUBTYPE_LABELS[franchise.subtype] ?? franchise.subtype}
                   />
@@ -187,7 +218,7 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
               </View>
               {franchise.estimatedRoi != null && (
                 <View style={styles.stats}>
-                  <Stat icon="📈" label="ROI estimado" value={franchise.estimatedRoi} />
+                  <Stat icon="trending-up-outline" label="ROI estimado" value={franchise.estimatedRoi} />
                 </View>
               )}
             </>
@@ -195,17 +226,17 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
 
           {franchise.segment === 'sociedad' && (
             <View style={styles.stats}>
-              <Stat icon="🏛️" label="Tipo" value={SUBTYPE_LABELS[franchise.subtype ?? ''] ?? '—'} />
+              <Stat icon="business-outline" label="Tipo" value={SUBTYPE_LABELS[franchise.subtype ?? ''] ?? '—'} />
               {franchise.availablePercentage != null && (
-                <Stat icon="🧩" label="Participación disponible" value={`${franchise.availablePercentage}%`} />
+                <Stat icon="pie-chart-outline" label="Participación disponible" value={`${franchise.availablePercentage}%`} />
               )}
             </View>
           )}
 
           {franchise.segment === 'proyecto' && franchise.projectStart != null && franchise.projectEnd != null && (
             <View style={styles.stats}>
-              <Stat icon="📅" label="Inicio" value={franchise.projectStart} />
-              <Stat icon="🏁" label="Cierre" value={franchise.projectEnd} />
+              <Stat icon="calendar-outline" label="Inicio" value={franchise.projectStart} />
+              <Stat icon="flag-outline" label="Cierre" value={franchise.projectEnd} />
             </View>
           )}
 
@@ -221,7 +252,8 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
 
           {franchise.videoUrl != null && franchise.videoUrl.length > 0 && (
             <Button
-              title="▶ Ver video del pitch"
+              title="Ver video del pitch"
+              icon="play-circle-outline"
               variant="outline"
               style={{ marginTop: spacing.md, width: undefined }}
               onPress={() => void Linking.openURL(franchise.videoUrl as string)}
@@ -230,20 +262,21 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
 
           <Text style={styles.sectionTitle}>Contacto</Text>
           <View style={styles.contactCard}>
-            <DetailRow icon="👤" label="Responsable" value={franchise.contactName} />
-            <DetailRow icon="✉️" label="Email" value={franchise.contactEmail} />
+            <DetailRow icon="person-outline" label="Responsable" value={franchise.contactName} />
+            <DetailRow icon="mail-outline" label="Email" value={franchise.contactEmail} />
             {franchise.contactPhone != null && (
-              <DetailRow icon="📞" label="Teléfono" value={franchise.contactPhone} />
+              <DetailRow icon="call-outline" label="Teléfono" value={franchise.contactPhone} />
             )}
             {franchise.website != null && (
-              <DetailRow icon="🌐" label="Sitio web" value={franchise.website} />
+              <DetailRow icon="globe-outline" label="Sitio web" value={franchise.website} />
             )}
           </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button title="💬 Conversar" variant="outline" onPress={onWhatsApp} />
+        <Button title="Conversar"
+          icon="logo-whatsapp" variant="outline" onPress={onWhatsApp} />
         <Button
           title={requesting ? 'Enviando...' : 'Solicitar información'}
           disabled={requesting}
@@ -254,20 +287,22 @@ export function FranchiseDetailScreen({ route, navigation }: Props) {
   );
 }
 
-function Stat({ icon, label, value }: { icon: string; label: string; value: string }) {
+function Stat({ icon, label, value }: { icon: IconName; label: string; value: string }) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.statIcon}>{icon}</Text>
+      <Icon name={icon} size={20} color={colors.primary} />
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
-function DetailRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+function DetailRow({ icon, label, value }: { icon: IconName; label: string; value: string }) {
   return (
     <View style={styles.detailRow}>
-      <Text style={styles.detailIcon}>{icon}</Text>
+      <View style={styles.detailIconBox}>
+        <Icon name={icon} size={15} color={colors.primary} />
+      </View>
       <Text style={styles.detailLabel}>{label}</Text>
       <Text style={styles.detailValue}>{value}</Text>
     </View>
@@ -314,8 +349,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  circleButtonText: {
-    fontSize: 18,
+  featuredTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.accentLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radii.full,
+  },
+  heroViewsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   heroFooter: {
     flexDirection: 'row',
@@ -379,6 +425,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     paddingHorizontal: spacing.sm + 2,
     paddingVertical: 5,
+  },
+  chipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   chipText: {
     fontSize: 12,
@@ -468,8 +519,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.xs,
   },
-  detailIcon: {
-    fontSize: 15,
+  detailIconBox: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: 'rgba(116,12,39,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: spacing.sm,
   },
   detailLabel: {

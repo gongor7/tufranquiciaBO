@@ -1,8 +1,8 @@
-import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { colors } from '../theme';
+import { Icon } from '../components/ui/Icon';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -28,39 +28,55 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: { backgroundColor: colors.white },
+        tabBarInactiveTintColor: colors.textLight,
+        tabBarStyle: { backgroundColor: colors.white, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ tabBarLabel: 'Inicio', tabBarIcon: () => <Text style={iconStyle}>🏠</Text> }}
+        options={{
+          tabBarLabel: 'Inicio',
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? 'home' : 'home-outline'} size={22} color={color} />
+          ),
+        }}
       />
       <Tab.Screen
         name="Explore"
         component={ExploreScreen}
-        options={{ tabBarLabel: 'Explorar', tabBarIcon: () => <Text style={iconStyle}>🔎</Text> }}
+        options={{
+          tabBarLabel: 'Explorar',
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? 'search' : 'search-outline'} size={22} color={color} />
+          ),
+        }}
       />
       <Tab.Screen
         name="Tickets"
         component={TicketsScreen}
         options={{
           tabBarLabel: 'Solicitudes',
-          tabBarIcon: () => <Text style={iconStyle}>📩</Text>,
-          ...(newCount > 0 ? { tabBarBadge: newCount } : {}),
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? 'mail' : 'mail-outline'} size={22} color={color} />
+          ),
+          ...(newCount > 0 ? { tabBarBadge: newCount, tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.white } } : {}),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ tabBarLabel: 'Perfil', tabBarIcon: () => <Text style={iconStyle}>👤</Text> }}
+        options={{
+          tabBarLabel: 'Perfil',
+          tabBarIcon: ({ color, focused }) => (
+            <Icon name={focused ? 'person' : 'person-outline'} size={22} color={color} />
+          ),
+        }}
       />
     </Tab.Navigator>
   );
 }
-
-const iconStyle = { fontSize: 18 };
 
 /**
  * Gate reactivo: sin registro no hay exploración (RF-37). Cuando el

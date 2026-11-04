@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, radii } from '../../theme';
 import { getFranchiseImage } from '../../constants/images';
+import { getIndustryIcon } from '../../constants/icons';
 import { formatInvestmentRange, formatUSD } from '../../utils/formatters';
 import { useFranchiseStore } from '../../stores/useFranchiseStore';
+import { Icon } from '../ui/Icon';
 import type { Franchise } from '../../types';
 
 interface FranchiseCardProps {
@@ -37,13 +39,19 @@ export function FranchiseCard({ franchise, onPress, showFavorite = true }: Franc
           />
         ) : (
           <View style={styles.imageFallback}>
-            <Text style={styles.imageFallbackEmoji}>{franchise.logoEmoji}</Text>
+            <Icon name="business" size={34} color={colors.white} />
           </View>
         )}
         <View style={styles.imageOverlay} />
-        {franchise.featured && <Text style={styles.featuredBadge}>★ Destacada</Text>}
+        {franchise.featured && (
+          <View style={styles.featuredBadge}>
+            <Icon name="star" size={11} color={colors.primaryDark} />
+            <Text style={styles.featuredBadgeText}>Destacada</Text>
+          </View>
+        )}
         <View style={styles.cityBadge}>
-          <Text style={styles.cityBadgeText}>📍 {franchise.city}</Text>
+          <Icon name="location" size={11} color={colors.white} />
+          <Text style={styles.cityBadgeText}>{franchise.city}</Text>
         </View>
         {showFavorite && (
           <Pressable
@@ -51,7 +59,11 @@ export function FranchiseCard({ franchise, onPress, showFavorite = true }: Franc
             hitSlop={8}
             style={({ pressed }) => [styles.favoriteButton, pressed && { opacity: 0.7 }]}
           >
-            <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+            <Icon
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={18}
+              color={isFavorite ? colors.primary : colors.textSecondary}
+            />
           </Pressable>
         )}
       </View>
@@ -67,15 +79,21 @@ export function FranchiseCard({ franchise, onPress, showFavorite = true }: Franc
         )}
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaText}>
-            {franchise.industryEmoji} {getIndustryLabelShort(franchise.industry)}
-          </Text>
+          <View style={styles.metaIndustry}>
+            <Icon
+              name={getIndustryIcon(franchise.industry)}
+              size={13}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.metaText}>{getIndustryLabelShort(franchise.industry)}</Text>
+          </View>
           {franchise.estimatedRoi != null && (
             <Text style={styles.roiText}>ROI {franchise.estimatedRoi}</Text>
           )}
         </View>
 
         <View style={styles.investmentRow}>
+          <Icon name="cash-outline" size={13} color={colors.primary} />
           <Text style={styles.investment} numberOfLines={1}>
             {formatInvestmentRange(
               franchise.minInvestment,
@@ -86,7 +104,10 @@ export function FranchiseCard({ franchise, onPress, showFavorite = true }: Franc
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.views}>👁 {franchise.viewsCount} vistas</Text>
+          <View style={styles.viewsRow}>
+            <Icon name="eye-outline" size={12} color={colors.textLight} />
+            <Text style={styles.views}>{franchise.viewsCount}</Text>
+          </View>
           <Text style={styles.from}>Desde {formatUSD(franchise.minInvestment)}</Text>
         </View>
       </View>
@@ -134,12 +155,9 @@ const styles = StyleSheet.create({
   },
   imageFallback: {
     flex: 1,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  imageFallbackEmoji: {
-    fontSize: 44,
   },
   imageOverlay: {
     position: 'absolute',
@@ -153,14 +171,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.sm,
     left: spacing.sm,
-    backgroundColor: colors.accent,
-    color: colors.primaryDark,
-    fontSize: 11,
-    fontWeight: '800',
+    backgroundColor: colors.accentLight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radii.full,
-    overflow: 'hidden',
+  },
+  featuredBadgeText: {
+    color: colors.primaryDark,
+    fontSize: 11,
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
   cityBadge: {
@@ -168,6 +190,9 @@ const styles = StyleSheet.create({
     bottom: spacing.sm,
     left: spacing.sm,
     backgroundColor: 'rgba(77,3,20,0.75)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: radii.full,
@@ -215,6 +240,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.sm,
   },
+  metaIndustry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
+  },
   metaText: {
     fontSize: 11.5,
     color: colors.textSecondary,
@@ -232,6 +263,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: spacing.sm,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   investment: {
     fontSize: 12.5,
@@ -243,6 +277,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: spacing.sm,
+  },
+  viewsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   views: {
     fontSize: 11,
